@@ -2655,7 +2655,7 @@ local LibraryThemes = {
 	TextColor = Color3.fromRGB(255,255,255),
 	ElementColor = Color3.fromRGB(20, 20, 20)
 }
-local Window = Library.CreateLib("felix.gg | rage | v1.1.0", "Synapse")
+local Window = Library.CreateLib("felix.gg", "Synapse")
 
 -- // Combat
 local Combat = Window:NewTab("Combat")

@@ -2648,6 +2648,13 @@ local Self = Players.LocalPlayer
 
 -- // Library
 local Library = Kavo
+local LibraryThemes = {
+	SchemeColor = Color3.fromRGB(100,0,0),
+	Background = Color3.fromRGB(10,10,10),
+	Header = Color3.fromRGB(15,15,15),
+	TextColor = Color3.fromRGB(255,255,255),
+	ElementColor = Color3.fromRGB(20, 20, 20)
+}
 local Window = Library.CreateLib("felix.gg | rage | v1.1.0", "Synapse")
 
 -- // Combat
@@ -2729,6 +2736,8 @@ end)
 -- // Visuals
 local Visuals = Window:NewTab("Visuals")
 local WorldSection = Visuals:NewSection("World")
+local VisualsSelfSection = Visuals:NewSection("Self")
+local VisualsViewmodelSection = Visuals:NewSection("Viewmodel")
 
 local function lock(o: Instance, p, g)
 	o[p]=g
@@ -2753,6 +2762,148 @@ local FullbrightButton = WorldSection:NewButton("Fullbright", "Enables fullbrigh
 	lock(Lighting, "FogStart", math.huge)
 	lock(Lighting, "FogColor", Color3.new(1,1,1))
 end)
+
+local Highlight = Instance.new("Highlight", Workspace)
+Highlight.Name = "CharacterHighlight"
+local ViewmodelHighlight = Instance.new("Highlight", Workspace)
+ViewmodelHighlight.Name = "ViewmodelHighlight"
+local WorldHighlight = Instance.new("Highlight", Workspace)
+WorldHighlight.Name = "WorldHighlight"
+WorldHighlight.DepthMode = Enum.HighlightDepthMode.Occluded
+
+
+_G.SelfHighlightToggled = false
+local SelfHighlightToggle = VisualsSelfSection:NewToggle("Highlight", "Highlights your character, with customizable appearance.", function(state)
+	if state then
+		_G.SelfHighlightToggled = true
+	else
+		_G.SelfHighlightToggled = false
+	end
+end)
+_G.HighlightFillTransparency = 0
+local HighlightFillTransparencyBox = VisualsSelfSection:NewTextBox("Highlight Fill Transparency", "Defines the transparency of the highlight's fill.", function(txt)
+	_G.HighlightFillTransparency = tonumber(txt)
+end)
+_G.HighlightOutlineTransparency = 0
+local HighlightOutlineTransparencyBox = VisualsSelfSection:NewTextBox("Highlight Outline Transparency", "Defines the transparency of the highlight's outline.", function(txt)
+	_G.HighlightOutlineTransparency = tonumber(txt)
+end)
+_G.HighlightFillColor = Color3.fromRGB(0,0,0)
+local HighlightFillColorPicker = VisualsSelfSection:NewColorPicker("Highlight Fill Color", "Defines the color of the highlight's fill.", Color3.fromRGB(0,0,0), function(color)
+	_G.HighlightFillColor = color
+end)
+_G.HighlightOutlineColor = Color3.fromRGB(0,0,0)
+local HighlightOutlineColorPicker = VisualsSelfSection:NewColorPicker("Highlight Outline Color", "Defines the color of the highlight's outline.", Color3.fromRGB(0,0,0), function(color)
+	_G.HighlightOutlineColor = color
+end)
+
+task.spawn(function(selfHighlight)
+	local highlightConnection = RunService.PreRender:Connect(function()
+		local Character = Self.Character
+		if (Character and Character ~= nil) then
+			if (_G.SelfHighlightToggled == true) then
+				Highlight.Enabled = true
+				Highlight.Adornee = Character
+				Highlight.FillTransparency = _G.HighlightFillTransparency
+				Highlight.OutlineTransparency = _G.HighlightOutlineTransparency
+				Highlight.FillColor = _G.HighlightFillColor
+				Highlight.OutlineColor = _G.HighlightOutlineColor
+			else
+				Highlight.Enabled = false
+			end
+		else
+			Highlight.Enabled = false
+		end
+	end)
+end)
+
+_G.ViewmodelHighlightToggled = false
+local ViewmodelHighlightToggle = VisualsViewmodelSection:NewToggle("Highlight", "Highlights your viewmodel, with customizable appearance.", function(state)
+	if state then
+		_G.ViewmodelHighlightToggled = true
+	else
+		_G.ViewmodelHighlightToggled = false
+	end
+end)
+_G.ViewmodelHighlightFillTransparency = 0
+local ViewmodelHighlightFillTransparencyBox = VisualsViewmodelSection:NewTextBox("Highlight Fill Transparency", "Defines the transparency of the highlight's fill.", function(txt)
+	_G.ViewmodelHighlightFillTransparency = tonumber(txt)
+end)
+_G.ViewmodelHighlightOutlineTransparency = 0
+local ViewmodelHighlightOutlineTransparencyBox = VisualsViewmodelSection:NewTextBox("Highlight Outline Transparency", "Defines the transparency of the highlight's outline.", function(txt)
+	_G.ViewmodelHighlightOutlineTransparency = tonumber(txt)
+end)
+_G.ViewmodelHighlightFillColor = Color3.fromRGB(0,0,0)
+local ViewmodelHighlightFillColorPicker = VisualsViewmodelSection:NewColorPicker("Highlight Fill Color", "Defines the color of the highlight's fill.", Color3.fromRGB(0,0,0), function(color)
+	_G.ViewmodelHighlightFillColor = color
+end)
+_G.ViewmodelHighlightOutlineColor = Color3.fromRGB(0,0,0)
+local ViewmodelHighlightOutlineColorPicker = VisualsViewmodelSection:NewColorPicker("Highlight Outline Color", "Defines the color of the highlight's outline.", Color3.fromRGB(0,0,0), function(color)
+	_G.ViewmodelHighlightOutlineColor = color
+end)
+
+task.spawn(function(viewmodelHighlight)
+	local ViewmodelHighlightConnection = RunService.PreRender:Connect(function()
+		local Viewmodel = Workspace:WaitForChild("Camera"):FindFirstChild("ViewModel", true)
+		if (Viewmodel and Viewmodel ~= nil) then
+			if (_G.ViewmodelHighlightToggled == true) then
+				ViewmodelHighlight.Enabled = true
+				ViewmodelHighlight.Adornee = Viewmodel
+				ViewmodelHighlight.FillTransparency = _G.ViewmodelHighlightFillTransparency
+				ViewmodelHighlight.OutlineTransparency = _G.ViewmodelHighlightOutlineTransparency
+				ViewmodelHighlight.FillColor = _G.ViewmodelHighlightFillColor
+				ViewmodelHighlight.OutlineColor = _G.ViewmodelHighlightOutlineColor
+			else
+				ViewmodelHighlight.Enabled = false
+			end
+		else
+			ViewmodelHighlight.Enabled = false
+		end
+	end)
+end)
+
+_G.WorldHighlightToggled = false
+local WorldHighlightToggle = WorldSection:NewToggle("Highlight", "Highlights the map, with customizable appearance.", function(state)
+	if state then
+		_G.WorldHighlightToggled = true
+	else
+		_G.WorldHighlightToggled = false
+	end
+end)
+_G.WorldHighlightFillTransparency = 0
+local WorldHighlightFillTransparencyBox = WorldSection:NewTextBox("Highlight Fill Transparency", "Defines the transparency of the highlight's fill.", function(txt)
+	_G.WorldHighlightFillTransparency = tonumber(txt)
+end)
+_G.WorldHighlightOutlineTransparency = 0
+local WorldHighlightOutlineTransparencyBox = WorldSection:NewTextBox("Highlight Outline Transparency", "Defines the transparency of the highlight's outline.", function(txt)
+	_G.WorldHighlightOutlineTransparency = tonumber(txt)
+end)
+_G.WorldHighlightFillColor = Color3.fromRGB(0,0,0)
+local WorldHighlightFillColorPicker = WorldSection:NewColorPicker("Highlight Fill Color", "Defines the color of the highlight's fill.", Color3.fromRGB(0,0,0), function(color)
+	_G.WorldHighlightFillColor = color
+end)
+_G.WorldHighlightOutlineColor = Color3.fromRGB(0,0,0)
+local WorldHighlightOutlineColorPicker = WorldSection:NewColorPicker("Highlight Outline Color", "Defines the color of the highlight's outline.", Color3.fromRGB(0,0,0), function(color)
+	_G.WorldHighlightOutlineColor = color
+end)
+
+task.spawn(function(WorldHighlightFunction)
+	local WorldHighlightConnection = RunService.PreRender:Connect(function()
+		if (_G.WorldHighlightToggled == true) then
+			WorldHighlight.Enabled = true
+			WorldHighlight.Adornee = nil
+			WorldHighlight.FillTransparency = _G.WorldHighlightFillTransparency
+			WorldHighlight.OutlineTransparency = _G.WorldHighlightOutlineTransparency
+			WorldHighlight.FillColor = _G.WorldHighlightFillColor
+			WorldHighlight.OutlineColor = _G.WorldHighlightOutlineColor
+		else
+			WorldHighlight.Enabled = false
+		end
+	end)
+end)
+
+
+
 
 -- // Rage
 local Rage = Window:NewTab("Rage")
@@ -2794,6 +2945,19 @@ local NoAnimsToggle = SelfSection:NewToggle("No Animations", "Toggles your anima
 		_G.NoAnimsToggled = true
 	else
 		_G.NoAnimsToggled = false
+	end
+end)
+
+local RemoveAnimator = SelfSection:NewButton("Remove Animator", "[RISKY] Removes your animator, freezing your character's animations.", function()
+	local Character = Self.Character
+	if (Character and Character ~= nil) then
+		local Humanoid = Character:FindFirstChildOfClass("Humanoid")
+		if (Humanoid and Humanoid ~= nil) then
+			local Animator = Humanoid:FindFirstChildOfClass("Animator")
+			if (Animator and Animator ~= nil) then
+				task.defer(Animator.Remove, Animator)
+			end
+		end
 	end
 end)
 
@@ -3380,4 +3544,14 @@ task.spawn(function(NoDebris)
 			end
 		end
 	end)
+end)
+
+-- // Settings
+
+local Settings = Window:NewTab("Settings")
+local Settings_UI = Settings:NewSection("UI")
+for theme, color in pairs(LibraryThemes) do
+	Settings_UI:NewColorPicker(theme, "Change your "..theme, color, function(color3)
+		Library:ChangeColor(theme, color3)
 	end)
+end

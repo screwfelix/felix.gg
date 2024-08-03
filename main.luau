@@ -2720,7 +2720,7 @@ local MeleeAuraHitpartDropdown = Combat_Section1:NewDropdown("Melee Aura Hitpart
 	_G.MeleeAuraHitpart = currentOption
 end)
 
-local function findNearestHead(player, partname)
+--[[local function findNearestLimb(player, partname)
 	local charactersFolder = workspace:WaitForChild("Characters")
 	if not charactersFolder then
 		return nil
@@ -2743,26 +2743,6 @@ local function findNearestHead(player, partname)
 		local limbs = {"Head", "Torso", "Left Leg", "Right Leg", "Left Arm", "Right Arm"}
 		targetedlimb = limbs[math.random(1,#limbs)]
 	end
-
-	--[[for _, part in pairs(workspace:WaitForChild("Characters"):GetDescendants()) do
-		if partname == "Random" then
-			if part:IsA("BasePart") and part.Name == targetedlimb and not (part.Parent == character) then
-				local distance = (part.Position - humanoidRootPart.Position).magnitude
-				if distance < minDistance then
-					minDistance = distance
-					nearestHead = part
-				end
-			end
-		else
-			if part:IsA("BasePart") and part.Name == partname and not (part.Parent == character) then
-				local distance = (part.Position - humanoidRootPart.Position).magnitude
-				if distance < minDistance then
-					minDistance = distance
-					nearestHead = part
-				end
-			end
-		end
-	end]]--
 	
 	for _, player in pairs(workspace:WaitForChild("Characters"):GetChildren()) do
 		for i, part in pairs(player:GetChildren()) do
@@ -2787,6 +2767,22 @@ local function findNearestHead(player, partname)
 	end
 
 	return nearestHead
+end]]--
+
+local function findNearestLimb(player, partname)
+	local c = player.Character
+	local nearestPart
+	if c then
+		local hrp = c:FindFirstChild("HumanoidRootPart")
+		if hrp then
+			for i, part in pairs(Workspace:GetPartBoundsInBox(hrp.CFrame, Vector3.new(25,25,25))) do
+				if part.Name == partname then
+					nearestPart = part
+					return nearestPart
+				end
+			end
+		end
+	end
 end
 
 task.spawn(function()
@@ -2807,7 +2803,7 @@ task.spawn(function()
 						end
 						for i,v in pairs(dmgpoints) do
 							if hrp then
-								local nearestHead = findNearestHead(Self, _G.MeleeAuraHitpart)
+								local nearestHead = findNearestLimb(Self, _G.MeleeAuraHitpart)
 
 								if nearestHead then
 									print("Nearest 'Head' part is at:", nearestHead.Position)
@@ -2845,7 +2841,7 @@ task.spawn(function()
 						end
 						for i,v in pairs(dmgpoints) do
 							if hrp then
-								local nearestHead = findNearestHead(Self, _G.MeleeAuraHitpart)
+								local nearestHead = findNearestLimb(Self, _G.MeleeAuraHitpart)
 
 								if nearestHead then
 									print("Nearest 'Head' part is at:", nearestHead.Position)
@@ -2991,7 +2987,7 @@ local function auraProjectile(projectile: Part)
 		RunService.PreRender:Connect(function()
 			BG.CFrame = camera.CoordinateFrame
 			BV.Velocity = ((camera.CFrame.LookVector * forward) + (camera.CFrame.RightVector * sideways)) * _G.ProjectileSpeed
-			local part = findNearestHead(Self, _G.ProjectileAuraHitpart)
+			local part = findNearestLimb(Self, _G.ProjectileAuraHitpart)
 			if part then
 				projectile.CFrame = part.CFrame
 			end

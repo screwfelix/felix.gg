@@ -2667,158 +2667,45 @@ local LibraryThemes = {
 }
 local Window = Library.CreateLib("felix.gg", "Synapse")
 
--- // Combat
+-- // Tabs
+
 local Combat = Window:NewTab("Combat")
 local Combat_Section1 = Combat:NewSection("Melees")
+local Combat_Section2 = Combat:NewSection("Projectiles")
 
-_G.HitboxVisible = false
-local HitboxVisibleToggler = Combat_Section1:NewToggle("Hitbox Expander Visible", "For debug purposes.", function(state)
-	if state then
-		_G.HitboxVisible = true
-	else
-		_G.HitboxVisible = false
-	end
+local Visuals = Window:NewTab("Visuals")
+local WorldSection = Visuals:NewSection("World")
+local VisualsSelfSection = Visuals:NewSection("Self")
+local VisualsViewmodelSection = Visuals:NewSection("Viewmodel")
+
+local Misc = Window:NewTab("Misc")
+local MiscSection = Misc:NewSection("Misc")
+
+local Movement = Window:NewTab("Movement")
+local MovementSelf = Movement:NewSection("Self")
+
+local AntiAim = Window:NewTab("Anti-Aim")
+local AntiAim_Section1 = AntiAim:NewSection("Self")
+
+local Rage = Window:NewTab("Rage")
+local SelfSection = Rage:NewSection("Self")
+
+
+local Map = Window:NewTab("Map")
+local MapSection = Map:NewSection("Map")
+
+local Settings = Window:NewTab("Settings")
+local Settings_UI = Settings:NewSection("UI")
+for theme, color in pairs(LibraryThemes) do
+	Settings_UI:NewColorPicker(theme, "Change your "..theme, color, function(color3)
+		Library:ChangeColor(theme, color3)
+	end)
+end
+Settings_UI:NewKeybind("Toggle UI", "Defines a keybind for toggling the UI's visibility.", Enum.KeyCode.Insert, function()
+	Library:ToggleUI()
 end)
 
-local HitboxExpanderToggle = Combat_Section1:NewButton("Melee Hitbox Expander", "MUST HAVE AN MELEE EQUIPPED.", function()
-	local Character = Self.Character
-	if Character then
-		local Melee = Character:FindFirstChildOfClass("Tool")
-		if Melee then
-			local Handle = Melee:FindFirstChild("Handle") or Melee:FindFirstChild("WeaponHandle")
-			if Handle then
-				for i,v in pairs(Handle:GetDescendants()) do
-					if v:IsA("Attachment") and v.Name == "DmgPoint" and not (v:HasTag("expanded")) then
-						for i = 1, 5 do
-							local nv = v:Clone()nv:AddTag("expanded")
-							nv.Parent = v.Parent
-							nv.WorldPosition = v.WorldPosition + Vector3.new(i,0,0)
-							task.spawn(function() RunService.PreRender:Connect(function() nv.Visible = _G.HitboxVisible end) end)
-						end
-						for i = 1, 5 do
-							local nv = v:Clone()nv:AddTag("expanded")
-							nv.Parent = v.Parent
-							nv.WorldPosition = v.WorldPosition - Vector3.new(i,0,0)
-							task.spawn(function() RunService.PreRender:Connect(function() nv.Visible = _G.HitboxVisible end) end)
-						end
-						for i = 1, 5 do
-							local nv = v:Clone()nv:AddTag("expanded")
-							nv.Parent = v.Parent
-							nv.WorldPosition = v.WorldPosition + Vector3.new(0,0,i)
-							task.spawn(function() RunService.PreRender:Connect(function() nv.Visible = _G.HitboxVisible end) end)
-						end
-						for i = 1, 5 do
-							local nv = v:Clone()nv:AddTag("expanded")
-							nv.Parent = v.Parent
-							nv.WorldPosition = v.WorldPosition - Vector3.new(0,0,i)
-							task.spawn(function() RunService.PreRender:Connect(function() nv.Visible = _G.HitboxVisible end) end)
-						end
-						for i = 1, 5 do
-							local nv = v:Clone()nv:AddTag("expanded")
-							nv.Parent = v.Parent
-							nv.WorldPosition = v.WorldPosition + Vector3.new(0,i,0)
-							task.spawn(function() RunService.PreRender:Connect(function() nv.Visible = _G.HitboxVisible end) end)
-						end
-						for i = 1, 5 do
-							local nv = v:Clone()nv:AddTag("expanded")
-							nv.Parent = v.Parent
-							nv.WorldPosition = v.WorldPosition - Vector3.new(0,i,0)
-							task.spawn(function() RunService.PreRender:Connect(function() nv.Visible = _G.HitboxVisible end) end)
-						end
-					end
-				end
-			else
-				local Arm = Character:FindFirstChild("Right Arm")
-				if (Arm and Arm ~= nil) then
-					for i,v in pairs(Arm:GetDescendants()) do
-						if v:IsA("Attachment") and v.Name == "DmgPoint" and not (v:HasTag("expanded")) then
-							for i = 1, 5 do
-								local nv = v:Clone()nv:AddTag("expanded")
-								nv.Parent = v.Parent
-								nv.WorldPosition = v.WorldPosition + Vector3.new(i,0,0)
-								task.spawn(function() RunService.PreRender:Connect(function() nv.Visible = _G.HitboxVisible end) end)
-							end
-							for i = 1, 5 do
-								local nv = v:Clone()nv:AddTag("expanded")
-								nv.Parent = v.Parent
-								nv.WorldPosition = v.WorldPosition - Vector3.new(i,0,0)
-								task.spawn(function() RunService.PreRender:Connect(function() nv.Visible = _G.HitboxVisible end) end)
-							end
-							for i = 1, 5 do
-								local nv = v:Clone()nv:AddTag("expanded")
-								nv.Parent = v.Parent
-								nv.WorldPosition = v.WorldPosition + Vector3.new(0,0,i)
-								task.spawn(function() RunService.PreRender:Connect(function() nv.Visible = _G.HitboxVisible end) end)
-							end
-							for i = 1, 5 do
-								local nv = v:Clone()nv:AddTag("expanded")
-								nv.Parent = v.Parent
-								nv.WorldPosition = v.WorldPosition - Vector3.new(0,0,i)
-								task.spawn(function() RunService.PreRender:Connect(function() nv.Visible = _G.HitboxVisible end) end)
-							end
-							for i = 1, 5 do
-								local nv = v:Clone()nv:AddTag("expanded")
-								nv.Parent = v.Parent
-								nv.WorldPosition = v.WorldPosition + Vector3.new(0,i,0)
-								task.spawn(function() RunService.PreRender:Connect(function() nv.Visible = _G.HitboxVisible end) end)
-							end
-							for i = 1, 5 do
-								local nv = v:Clone()nv:AddTag("expanded")
-								nv.Parent = v.Parent
-								nv.WorldPosition = v.WorldPosition - Vector3.new(0,i,0)
-								task.spawn(function() RunService.PreRender:Connect(function() nv.Visible = _G.HitboxVisible end) end)
-							end
-						end
-					end
-				end
-			end
-		else
-			local Arm = Character:FindFirstChild("Right Arm")
-			if (Arm and Arm ~= nil) then
-				for i,v in pairs(Arm:GetDescendants()) do
-					if v:IsA("Attachment") and v.Name == "DmgPoint" and not (v:HasTag("expanded")) then
-						for i = 1, 5 do
-							local nv = v:Clone()nv:AddTag("expanded")
-							nv.Parent = v.Parent
-							nv.WorldPosition = v.WorldPosition + Vector3.new(i,0,0)
-							task.spawn(function() RunService.PreRender:Connect(function() nv.Visible = _G.HitboxVisible end) end)
-						end
-						for i = 1, 5 do
-							local nv = v:Clone()nv:AddTag("expanded")
-							nv.Parent = v.Parent
-							nv.WorldPosition = v.WorldPosition - Vector3.new(i,0,0)
-							task.spawn(function() RunService.PreRender:Connect(function() nv.Visible = _G.HitboxVisible end) end)
-						end
-						for i = 1, 5 do
-							local nv = v:Clone()nv:AddTag("expanded")
-							nv.Parent = v.Parent
-							nv.WorldPosition = v.WorldPosition + Vector3.new(0,0,i)
-							task.spawn(function() RunService.PreRender:Connect(function() nv.Visible = _G.HitboxVisible end) end)
-						end
-						for i = 1, 5 do
-							local nv = v:Clone()nv:AddTag("expanded")
-							nv.Parent = v.Parent
-							nv.WorldPosition = v.WorldPosition - Vector3.new(0,0,i)
-							task.spawn(function() RunService.PreRender:Connect(function() nv.Visible = _G.HitboxVisible end) end)
-						end
-						for i = 1, 5 do
-							local nv = v:Clone()nv:AddTag("expanded")
-							nv.Parent = v.Parent
-							nv.WorldPosition = v.WorldPosition + Vector3.new(0,i,0)
-							task.spawn(function() RunService.PreRender:Connect(function() nv.Visible = _G.HitboxVisible end) end)
-						end
-						for i = 1, 5 do
-							local nv = v:Clone()nv:AddTag("expanded")
-							nv.Parent = v.Parent
-							nv.WorldPosition = v.WorldPosition - Vector3.new(0,i,0)
-							task.spawn(function() RunService.PreRender:Connect(function() nv.Visible = _G.HitboxVisible end) end)
-						end
-					end
-				end
-			end
-		end
-	end
-end)
+-- // Combat
 
 _G.MeleeAuraToggled = false
 local MeleeAuraToggler = Combat_Section1:NewToggle("Melee Kill Aura", "REALLY OP || only works if ur near someone", function(state)
@@ -2828,30 +2715,46 @@ local MeleeAuraToggler = Combat_Section1:NewToggle("Melee Kill Aura", "REALLY OP
 		_G.MeleeAuraToggled = false
 	end
 end)
+_G.MeleeAuraHitpart = "Head"
+local MeleeAuraHitpartDropdown = Combat_Section1:NewDropdown("Melee Aura Hitpart", "Defines which limb you want the aura to hit.", {"Head", "Torso", "Right Arm", "Left Arm", "Right Leg", "Left Leg", "Random"}, function(currentOption)
+	_G.MeleeAuraHitpart = currentOption
+end)
 
-task.spawn(function()
-	
-	local function findNearestHead(player)
-		local charactersFolder = workspace:WaitForChild("Characters")
-		if not charactersFolder then
-			return nil
-		end
+local function findNearestHead(player, partname)
+	local charactersFolder = workspace:WaitForChild("Characters")
+	if not charactersFolder then
+		return nil
+	end
 
-		local character = charactersFolder:FindFirstChild(player.Name)
-		if not character then
-			return nil
-		end
+	local character = charactersFolder:FindFirstChild(player.Name)
+	if not character then
+		return nil
+	end
 
-		local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
-		if not humanoidRootPart then
-			return nil
-		end
+	local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+	if not humanoidRootPart then
+		return nil
+	end
 
-		local nearestHead = nil
-		local minDistance = math.huge  -- Start with a large number
+	local nearestHead = nil
+	local minDistance = math.huge  -- Start with a large number
+	local targetedlimb
+	if partname == "Random" then
+		local limbs = {"Head", "Torso", "Left Leg", "Right Leg", "Left Arm", "Right Arm"}
+		targetedlimb = limbs[math.random(1,#limbs)]
+	end
 
-		for _, part in pairs(workspace:WaitForChild("Characters"):GetDescendants()) do
-			if part:IsA("BasePart") and part.Name == "Head" and not (part.Parent == character) then
+	for _, part in pairs(workspace:WaitForChild("Characters"):GetDescendants()) do
+		if partname == "Random" then
+			if part:IsA("BasePart") and part.Name == targetedlimb and not (part.Parent == character) then
+				local distance = (part.Position - humanoidRootPart.Position).magnitude
+				if distance < minDistance then
+					minDistance = distance
+					nearestHead = part
+				end
+			end
+		else
+			if part:IsA("BasePart") and part.Name == partname and not (part.Parent == character) then
 				local distance = (part.Position - humanoidRootPart.Position).magnitude
 				if distance < minDistance then
 					minDistance = distance
@@ -2859,9 +2762,12 @@ task.spawn(function()
 				end
 			end
 		end
-
-		return nearestHead
 	end
+
+	return nearestHead
+end
+
+task.spawn(function()
 	RunService.PreRender:Connect(function()
 		if _G.MeleeAuraToggled == true then
 			local c = Self.Character
@@ -2879,7 +2785,7 @@ task.spawn(function()
 						end
 						for i,v in pairs(dmgpoints) do
 							if hrp then
-								local nearestHead = findNearestHead(Self)
+								local nearestHead = findNearestHead(Self, _G.MeleeAuraHitpart)
 
 								if nearestHead then
 									print("Nearest 'Head' part is at:", nearestHead.Position)
@@ -2890,17 +2796,15 @@ task.spawn(function()
 							end
 						end
 					else
-						local rarm = c:FindFirstChild("Right Arm")
-						if rarm then
-							local dmgpoints = {}
-							for i,v in pairs(rarm:GetChildren()) do
+						local dmgpoints = {}
+							for i,v in pairs(c:GetDescendants()) do
 								if v:IsA("Attachment") and v.Name == "DmgPoint" then
 									table.insert(dmgpoints, v)
 								end
 							end
 							for i,v in pairs(dmgpoints) do
 								if hrp then
-									local nearestHead = findNearestHead(Self)
+								local nearestHead = findNearestHead(Self, _G.MeleeAuraHitpart)
 
 									if nearestHead then
 										print("Nearest 'Head' part is at:", nearestHead.Position)
@@ -2908,7 +2812,6 @@ task.spawn(function()
 									else
 										print("No 'Head' part found.")
 									end
-								end
 							end
 						end
 					end
@@ -2919,7 +2822,7 @@ task.spawn(function()
 end)
 
 _G.ProjectileControlToggled = false
-local ProjectileControlToggler = Combat_Section1:NewToggle("Projectile Control", "Lets you control projectiles.", function(state)
+local ProjectileControlToggler = Combat_Section2:NewToggle("Projectile Control", "Lets you control projectiles.", function(state)
 	if state then
 		_G.ProjectileControlToggled = true
 	else
@@ -2928,8 +2831,23 @@ local ProjectileControlToggler = Combat_Section1:NewToggle("Projectile Control",
 end)
 
 _G.ProjectileSpeed = 0
-local ProjectileSpeedBox = Combat_Section1:NewTextBox("Projectile Control Speed", "Defines how fast you will fly with projectiles.", function(txt)
+local ProjectileSpeedBox = Combat_Section2:NewTextBox("Projectile Control Speed", "Defines how fast you will fly with projectiles.", function(txt)
 	_G.ProjectileSpeed = tonumber(txt)
+end)
+
+_G.ProjectileAuraToggled = false
+local ProjectileAuraToggler = Combat_Section2:NewToggle("Projectile Aura", "Works just like a silent aim, re-directs projectiles to the nearest player.", function(state)
+	if state then
+		_G.ProjectileAuraToggled = true
+	else
+		_G.ProjectileAuraToggled = false
+	end
+end)
+
+
+_G.ProjectileAuraHitpart = "Head"
+local ProjectileAuraHitpartDropdown = Combat_Section2:NewDropdown("Projectile Aura Hitpart", "Defines which limb you want the aura to hit.", {"Head", "Torso", "Right Arm", "Left Arm", "Right Leg", "Left Leg", "Random"}, function(currentOption)
+	_G.ProjectileAuraHitpart = currentOption
 end)
 
 local UserInputService = game:GetService("UserInputService")
@@ -3012,17 +2930,56 @@ local function controlProjectile(projectile: Part)
 	end)
 end
 
+local function auraProjectile(projectile: Part)
+	for i,v:Instance in pairs(projectile:GetDescendants()) do
+		if v:IsA("LinearVelocity") or v:IsA("AngularVelocity") or v:IsA("BodyVelocity") or v:IsA("BodyGyro") or v:IsA("BodyForce") or v:IsA("BodyThrust") or v:IsA("BodyPosition") or v:IsA("BodyAngularVelocity") or v:IsA("BodyMover") then
+			task.defer(v.Destroy, v)
+		end
+	end
+
+	local BV = Instance.new("BodyVelocity", projectile)
+	BV.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+	BV.Velocity = Vector3.new()
+
+	local BG = Instance.new("BodyGyro", projectile)
+	BG.P = 9e4
+	BG.MaxTorque = Vector3.new(1e9, 1e9, 1e9)
+
+	print("controlling ".. projectile.Name)
+	task.spawn(function()
+		RunService.PreRender:Connect(function()
+			BG.CFrame = camera.CoordinateFrame
+			BV.Velocity = ((camera.CFrame.LookVector * forward) + (camera.CFrame.RightVector * sideways)) * _G.ProjectileSpeed
+			local part = findNearestHead(Self, _G.ProjectileAuraHitpart)
+			if part then
+				projectile.CFrame = part.CFrame
+			end
+		end)
+	end)
+end
+
+
 task.spawn(function()
 	Workspace:WaitForChild("Debris").DescendantAdded:Connect(function(v)
 		if (v.Name == "Snowball" or v.Name == "RPG_Rocket" or v.Name == "FireworkLauncher_Rocket" or v.Name == "Hallowsw_Rocket2" or v.Name == "Panzer_Rocket" or v.Name == "TransIgnore" or v.Name == "GrenadeLauncherGrenade" or v.Name == "SBL_Rocket" or v.Name == "SpitBall" or v.Name == "Effect") and v:IsA("BasePart") then
-			controlProjectile(v)
+			if _G.ProjectileControlToggled == true then
+				controlProjectile(v)
+			end
+		end
+	end)
+end)
+
+task.spawn(function()
+	Workspace:WaitForChild("Debris").DescendantAdded:Connect(function(v)
+		if (v.Name == "Snowball" or v.Name == "RPG_Rocket" or v.Name == "FireworkLauncher_Rocket" or v.Name == "Hallowsw_Rocket2" or v.Name == "Panzer_Rocket" or v.Name == "TransIgnore" or v.Name == "GrenadeLauncherGrenade" or v.Name == "SBL_Rocket" or v.Name == "SpitBall" or v.Name == "Effect") and v:IsA("BasePart") then
+			if _G.ProjectileAuraToggled == true then
+				auraProjectile(v)
+			end
 		end
 	end)
 end)
 
 -- // Movement
-local Movement = Window:NewTab("Movement")
-local MovementSelf = Movement:NewSection("Self")
 
 _G.SpeedToggled = false
 local SpeedToggle = MovementSelf:NewToggle("Speed", "Toggles Speed On/Off.", function(state)
@@ -3089,10 +3046,6 @@ task.spawn(function(Jump)
 end)
 
 -- // Visuals
-local Visuals = Window:NewTab("Visuals")
-local WorldSection = Visuals:NewSection("World")
-local VisualsSelfSection = Visuals:NewSection("Self")
-local VisualsViewmodelSection = Visuals:NewSection("Viewmodel")
 
 local function lock(o: Instance, p, g)
 	o[p]=g
@@ -3698,12 +3651,10 @@ task.spawn(function()
 end)
 
 
--- // Rage
-local Rage = Window:NewTab("Rage")
-local SelfSection = Rage:NewSection("Self")
+-- // Anti-Aim
 
 _G.SpinbotToggled = false
-local SpinbotToggle = SelfSection:NewToggle("Spinbot", "Toggles Spinbot On/Off.", function(state)
+local SpinbotToggle = AntiAim_Section1:NewToggle("Spinbot", "Toggles Spinbot On/Off.", function(state)
 	if state then
 		_G.SpinbotToggled = true
 	else
@@ -3712,13 +3663,13 @@ local SpinbotToggle = SelfSection:NewToggle("Spinbot", "Toggles Spinbot On/Off."
 end)
 
 _G.SpinbotSpeed = 0
-local Rage_Slider1 = SelfSection:NewSlider("Spinbot Speed", "Adjusts how much degrees the spinbot will rotate your character per step.", 360, 0, function(Value)
+local Rage_Slider1 = AntiAim_Section1:NewSlider("Spinbot Speed", "Adjusts how much degrees the spinbot will rotate your character per step.", 360, 0, function(Value)
 	_G.SpinbotSpeed = Value
 end)
 
 
 _G.AngleEnabled = false
-local AngleToggle = SelfSection:NewToggle("Angle", "Toggles angle on/off.", function(state)
+local AngleToggle = AntiAim_Section1:NewToggle("Angle", "Toggles angle on/off.", function(state)
 	if state then
 		_G.AngleEnabled = true
 	else
@@ -3728,7 +3679,7 @@ end)
 
 _G.AngleSelected = ""
 local AngleList = {"Mouse", "Camera"}
-local AngleDropdown = SelfSection:NewDropdown("Angle","Select the angle you want. Use spinbot for an offset.", AngleList, function(Value)
+local AngleDropdown = AntiAim_Section1:NewDropdown("Angle","Select the angle you want. Use spinbot for an offset.", AngleList, function(Value)
 	_G.AngleSelected = Value
 end)
 
@@ -3955,10 +3906,7 @@ task.spawn(function(UnbreakableLimbs)
 		end
 	end)
 end)
-
 -- // Misc
-local Misc = Window:NewTab("Misc")
-local MiscSection = Misc:NewSection("Misc")
 
 _G.InfPepperToggled = false
 local InfPepperToggle = MiscSection:NewToggle("Infinite Pepper Spray", "Grants you infinite pepper fuel. Useful for trolling.", function(state)
@@ -4017,8 +3965,6 @@ task.spawn(function(InfInvSlots)
 end)
 
 -- // Map
-local Map = Window:NewTab("Map")
-local MapSection = Map:NewSection("Map")
 
 _G.NoDebrisToggled = false
 local NoDebrisToggle = MapSection:NewToggle("No Debris", "Visually removes all type of debris.", function(state)
@@ -4191,17 +4137,4 @@ task.spawn(function(NoDebris)
 			end
 		end
 	end)
-end)
-
--- // Settings
-
-local Settings = Window:NewTab("Settings")
-local Settings_UI = Settings:NewSection("UI")
-for theme, color in pairs(LibraryThemes) do
-	Settings_UI:NewColorPicker(theme, "Change your "..theme, color, function(color3)
-		Library:ChangeColor(theme, color3)
-	end)
-end
-Settings_UI:NewKeybind("Toggle UI", "Defines a keybind for toggling the UI's visibility.", Enum.KeyCode.Insert, function()
-	Library:ToggleUI()
 end)

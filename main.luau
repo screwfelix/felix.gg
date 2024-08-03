@@ -2715,14 +2715,105 @@ end)
 
 -- // Combat
 
-_G.MeleeAuraToggled = false
-local MeleeAuraToggler = Combat_Section1:NewToggle("Melee Kill Aura", "REALLY OP || only works if ur near someone", function(state)
-	if state then
-		_G.MeleeAuraToggled = true
-	else
-		_G.MeleeAuraToggled = false
+
+local function findNearestLimb(player, partname, maxdistance)
+	local c = player.Character
+	local nearestPart
+	if c then
+		local hrp = c:FindFirstChild("HumanoidRootPart")
+		if hrp then
+			for i, part in pairs(Workspace:GetPartBoundsInBox(hrp.CFrame, Vector3.new(maxdistance,maxdistance,maxdistance))) do
+				if partname == "Random" then
+					local limbs = {"Head", "Torso", "Right Arm", "Left Arm", "Right Leg", "Left Leg"}
+					local selectedlimb = limbs[math.random(1,#limbs)]
+					if part.Name == selectedlimb then
+						if not (part.Parent.Name == c.Name) then
+							if part.Parent then
+								local h = part.Parent:FindFirstChildOfClass("Humanoid")
+								if h then
+									if h.Health > 0 then
+										nearestPart = part
+										return nearestPart
+									end
+								end
+							end
+						end
+					end
+				else
+					if part.Name == partname then
+						if not (part.Parent.Name == c.Name) then
+							if part.Parent then
+								local h = part.Parent:FindFirstChildOfClass("Humanoid")
+								if h then
+									if h.Health > 0 then
+										nearestPart = part
+										return nearestPart
+									end
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+end
+local meleedmgpoints = {}
+local meleeAuraButton = Combat_Section1:NewButton("Melee Aura (Read Desc)", "Click whenever you're equipping a melee.", function()
+	local c = Self.Character
+	if c then
+		local t = c:FindFirstChildOfClass("Tool")
+		if t then
+			local h = t:FindFirstChild("Handle") or t:FindFirstChild("WeaponHandle")
+			if h then
+				-- melee
+				for i, v in pairs(h:GetChildren()) do
+					if (v:IsA("Attachment") and v.Name == "DmgPoint") then
+						table.insert(meleedmgpoints, v)
+					end
+				end
+			else
+				-- fists
+				local arm1 = c:FindFirstChild("Right Arm")
+				local arm2 = c:FindFirstChild("Left Arm")
+				local leg1 = c:FindFirstChild("Right Leg")
+				for i, v in pairs(arm1:GetChildren()) do
+					if (v:IsA("Attachment") and v.Name == "DmgPoint") then
+						table.insert(meleedmgpoints, v)
+					end
+				end
+				for i, v in pairs(arm2:GetChildren()) do
+					if (v:IsA("Attachment") and v.Name == "DmgPoint") then
+						table.insert(meleedmgpoints, v)
+					end
+				end
+				for i, v in pairs(leg1:GetChildren()) do
+					if (v:IsA("Attachment") and v.Name == "DmgPoint") then
+						table.insert(meleedmgpoints, v)
+					end
+				end
+			end
+		end
 	end
 end)
+
+RunService.PreRender:Connect(function()
+	local c = Self.Character
+	if c then
+		local hrp = c:FindFirstChild("HumanoidRootPart")
+		if hrp then
+			for i,v in pairs(meleedmgpoints) do
+				local nearestLimb = findNearestLimb(Self, _G.MeleeAuraHitpart, 25)
+
+				if nearestLimb then
+					v.Position = Vector3.zero
+					v.WorldCFrame = nearestLimb.CFrame
+				end
+			end
+		end
+	end
+end)
+
 _G.MeleeAuraHitpart = "Head"
 local MeleeAuraHitpartDropdown = Combat_Section1:NewDropdown("Melee Aura Hitpart", "Defines which limb you want the aura to hit.", {"Head", "Torso", "Right Arm", "Left Arm", "Right Leg", "Left Leg", "Random"}, function(currentOption)
 	_G.MeleeAuraHitpart = currentOption
@@ -2776,188 +2867,6 @@ end)
 
 	return nearestHead
 end]]--
-
-local function findNearestLimb(player, partname, maxdistance)
-	local c = player.Character
-	local nearestPart
-	if c then
-		local hrp = c:FindFirstChild("HumanoidRootPart")
-		if hrp then
-			for i, part in pairs(Workspace:GetPartBoundsInBox(hrp.CFrame, Vector3.new(maxdistance,maxdistance,maxdistance))) do
-				if partname == "Random" then
-					local limbs = {"Head", "Torso", "Right Arm", "Left Arm", "Right Leg", "Left Leg"}
-					local selectedlimb = limbs[math.random(1,#limbs)]
-					if part.Name == selectedlimb then
-						if not (part.Parent.Name == c.Name) then
-							if part.Parent then
-								local h = part.Parent:FindFirstChildOfClass("Humanoid")
-								if h then
-									if h.Health > 0 then
-										nearestPart = part
-										return nearestPart
-									end
-								end
-							end
-						end
-					end
-				else
-					if part.Name == partname then
-						if not (part.Parent.Name == c.Name) then
-							if part.Parent then
-								local h = part.Parent:FindFirstChildOfClass("Humanoid")
-								if h then
-									if h.Health > 0 then
-										nearestPart = part
-										return nearestPart
-									end
-								end
-							end
-						end
-					end
-				end
-			end
-		end
-	end
-end
-
-local meleedmgpoints = {}
-
---[[task.spawn(function()
-	RunService.PreRender:Connect(function()
-		if _G.MeleeAuraToggled == true then
-			local c = Self.Character
-			if c then
-				local hrp = c:FindFirstChild("HumanoidRootPart")
-				local t = c:FindFirstChildOfClass("Tool")
-				if t then
-					local h = t:FindFirstChild("Handle") or t:FindFirstChild("WeaponHandle")
-					if h then
-						for i,v in pairs(h:GetChildren()) do
-							if v:IsA("Attachment") and v.Name == "DmgPoint" then
-								table.insert(meleedmgpoints, v)
-							end
-						end
-						for i,v in pairs(meleedmgpoints) do
-							if hrp then
-								local nearestHead = findNearestLimb(Self, _G.MeleeAuraHitpart, 25)
-
-								if nearestHead then
-									print("Nearest 'Head' part is at:", nearestHead.Position)
-									v.WorldPosition = nearestHead.Position
-								else
-									print("No 'Head' part found.")
-								end
-							end
-						end
-					else
-						local rarm = c:FindFirstChild("Right Arm")
-						local larm = c:FindFirstChild("Left Arm")
-						local rleg = c:FindFirstChild("Right Leg")
-						if rarm then
-							for i,v in pairs(rarm:GetChildren()) do
-								if v:IsA("Attachment") and v.Name == "DmgPoint" then
-									table.insert(meleedmgpoints, v)
-								end
-							end
-						end
-						if larm then
-							for i,v in pairs(larm:GetChildren()) do
-								if v:IsA("Attachment") and v.Name == "DmgPoint" then
-									table.insert(meleedmgpoints, v)
-								end
-							end
-						end
-						if rleg then
-							for i,v in pairs(rleg:GetChildren()) do
-								if v:IsA("Attachment") and v.Name == "DmgPoint" then
-									table.insert(meleedmgpoints, v)
-								end
-							end
-						end
-						for i,v in pairs(meleedmgpoints) do
-							if hrp then
-								local nearestHead = findNearestLimb(Self, _G.MeleeAuraHitpart, 25)
-
-								if nearestHead then
-									print("Nearest 'Head' part is at:", nearestHead.Position)
-									v.WorldPosition = nearestHead.Position
-								else
-									print("No 'Head' part found.")
-								end
-							end
-						end
-					end
-				end
-			end
-		end
-	end)
-end)]]--
-
-task.spawn(function()
-	local function analyse(tool: Tool)
-		task.spawn(function()
-			task.wait(2)
-			if tool:IsA("Tool") then
-				print("Tool added: ".. tool.Name)
-				local handle = tool:FindFirstChild("Handle") or tool:FindFirstChild("WeaponHandle")
-				if handle then
-					print("Tool has a handle.")
-					for i, v in pairs(handle:GetChildren()) do
-						if v:IsA("Attachment") and v.Name == "DmgPoint" then
-							table.insert(meleedmgpoints, v)
-						end
-					end
-				else
-					print("Tool does not have a handle.")
-					local c = Self.Character
-					if c then
-						local arm1 = c:FindFirstChild("Right Arm")
-						local arm2 = c:FindFirstChild("Left Arm")
-						local leg1 = c:FindFirstChild("Right Leg")
-						for i, v in pairs(arm1:GetChildren()) do
-							if v:IsA("Attachment") and v.Name == "DmgPoint" then
-								table.insert(meleedmgpoints, v)
-							end
-						end
-						for i, v in pairs(arm2:GetChildren()) do
-							if v:IsA("Attachment") and v.Name == "DmgPoint" then
-								table.insert(meleedmgpoints, v)
-							end
-						end
-						for i, v in pairs(leg1:GetChildren()) do
-							if v:IsA("Attachment") and v.Name == "DmgPoint" then
-								table.insert(meleedmgpoints, v)
-							end
-						end
-					end
-				end
-			end
-		end)
-	end
-	
-	Self.CharacterAdded:Connect(function(c)
-		local tooladded = c.ChildAdded:Connect(analyse)
-	end)
-	
-	RunService.PreRender:Connect(function()
-		local c = Self.Character
-		if c then
-			local hrp = c:FindFirstChild("HumanoidRootPart")
-			if hrp then
-				if _G.MeleeAuraToggled == true then
-					for i,v in pairs(meleedmgpoints) do
-						local nearestLimb = findNearestLimb(Self, _G.MeleeAuraHitpart, 25)
-
-						if nearestLimb then
-							v.Position = Vector3.zero
-							v.WorldCFrame = nearestLimb.CFrame
-						end
-					end
-				end
-			end
-		end
-	end)
-end)
 
 _G.ProjectileControlToggled = false
 local ProjectileControlToggler = Combat_Section2:NewToggle("Projectile Control", "Lets you control projectiles.", function(state)

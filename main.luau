@@ -2744,7 +2744,7 @@ local function findNearestHead(player, partname)
 		targetedlimb = limbs[math.random(1,#limbs)]
 	end
 
-	for _, part in pairs(workspace:WaitForChild("Characters"):GetDescendants()) do
+	--[[for _, part in pairs(workspace:WaitForChild("Characters"):GetDescendants()) do
 		if partname == "Random" then
 			if part:IsA("BasePart") and part.Name == targetedlimb and not (part.Parent == character) then
 				local distance = (part.Position - humanoidRootPart.Position).magnitude
@@ -2759,6 +2759,28 @@ local function findNearestHead(player, partname)
 				if distance < minDistance then
 					minDistance = distance
 					nearestHead = part
+				end
+			end
+		end
+	end]]--
+	
+	for _, player in pairs(workspace:WaitForChild("Characters"):GetChildren()) do
+		for i, part in pairs(player:GetChildren()) do
+			if partname == "Random" then
+				if part:IsA("BasePart") and part.Name == targetedlimb and not (part.Parent == character) then
+					local distance = (part.Position - humanoidRootPart.Position).magnitude
+					if distance < minDistance then
+						minDistance = distance
+						nearestHead = part
+					end
+				end
+			else
+				if part:IsA("BasePart") and part.Name == partname and not (part.Parent == character) then
+					local distance = (part.Position - humanoidRootPart.Position).magnitude
+					if distance < minDistance then
+						minDistance = distance
+						nearestHead = part
+					end
 				end
 			end
 		end
@@ -2797,21 +2819,40 @@ task.spawn(function()
 						end
 					else
 						local dmgpoints = {}
-							for i,v in pairs(c:GetDescendants()) do
+						local rarm = c:FindFirstChild("Right Arm")
+						local larm = c:FindFirstChild("Left Arm")
+						local rleg = c:FindFirstChild("Right Leg")
+						if rarm then
+							for i,v in pairs(rarm:GetChildren()) do
 								if v:IsA("Attachment") and v.Name == "DmgPoint" then
 									table.insert(dmgpoints, v)
 								end
 							end
-							for i,v in pairs(dmgpoints) do
-								if hrp then
+						end
+						if larm then
+							for i,v in pairs(larm:GetChildren()) do
+								if v:IsA("Attachment") and v.Name == "DmgPoint" then
+									table.insert(dmgpoints, v)
+								end
+							end
+						end
+						if rleg then
+							for i,v in pairs(rleg:GetChildren()) do
+								if v:IsA("Attachment") and v.Name == "DmgPoint" then
+									table.insert(dmgpoints, v)
+								end
+							end
+						end
+						for i,v in pairs(dmgpoints) do
+							if hrp then
 								local nearestHead = findNearestHead(Self, _G.MeleeAuraHitpart)
 
-									if nearestHead then
-										print("Nearest 'Head' part is at:", nearestHead.Position)
-										v.WorldPosition = nearestHead.Position
-									else
-										print("No 'Head' part found.")
-									end
+								if nearestHead then
+									print("Nearest 'Head' part is at:", nearestHead.Position)
+									v.WorldPosition = nearestHead.Position
+								else
+									print("No 'Head' part found.")
+								end
 							end
 						end
 					end
@@ -2883,20 +2924,20 @@ end)
 
 local function controlProjectile(projectile: Part)
 	local char = Self.Character
-	
+
 	if char then
 		local hrp = char:FindFirstChild("HumanoidRootPart")
 		if hrp then
 			hrp.Anchored = true
 		end
 	end
-	
+
 	for i,v:Instance in pairs(projectile:GetDescendants()) do
 		if v:IsA("LinearVelocity") or v:IsA("AngularVelocity") or v:IsA("BodyVelocity") or v:IsA("BodyGyro") or v:IsA("BodyForce") or v:IsA("BodyThrust") or v:IsA("BodyPosition") or v:IsA("BodyAngularVelocity") or v:IsA("BodyMover") then
 			task.defer(v.Destroy, v)
 		end
 	end
-	
+
 	local BV = Instance.new("BodyVelocity", projectile)
 	BV.MaxForce = Vector3.new(1e9, 1e9, 1e9)
 	BV.Velocity = Vector3.new()
@@ -2904,13 +2945,13 @@ local function controlProjectile(projectile: Part)
 	local BG = Instance.new("BodyGyro", projectile)
 	BG.P = 9e4
 	BG.MaxTorque = Vector3.new(1e9, 1e9, 1e9)
-	
+
 	print("controlling ".. projectile.Name)
 	task.spawn(function()
 		camera.CameraSubject = projectile
 		if char then
-		local hum = char:FindFirstChildOfClass("Humanoid")
-		if hum then
+			local hum = char:FindFirstChildOfClass("Humanoid")
+			if hum then
 				projectile.Destroying:Connect(function()
 					camera.CameraSubject = hum
 					if char then
@@ -2920,9 +2961,9 @@ local function controlProjectile(projectile: Part)
 						end
 					end
 				end)
+			end
 		end
-		end
-		
+
 		RunService.PreRender:Connect(function()
 			BG.CFrame = camera.CoordinateFrame
 			BV.Velocity = ((camera.CFrame.LookVector * forward) + (camera.CFrame.RightVector * sideways)) * _G.ProjectileSpeed
@@ -3453,7 +3494,7 @@ task.spawn(function()
 						end
 					end)
 				end)
-				end
+			end
 		end
 	end)
 end)

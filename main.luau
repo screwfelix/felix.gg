@@ -140,6 +140,11 @@ end)
 local LibName = tostring(math.random(1, 100))..tostring(math.random(1,50))..tostring(math.random(1, 100))
 
 function Kavo:ToggleUI()
+	if game.Players.LocalPlayer.PlayerGui[LibName].Enabled then
+		game.Players.LocalPlayer.PlayerGui[LibName].Enabled = false
+	else
+		game.Players.LocalPlayer.PlayerGui[LibName].Enabled = true
+	end
 end
 
 function Kavo.CreateLib(kavName, themeList)
@@ -182,6 +187,11 @@ function Kavo.CreateLib(kavName, themeList)
 	local selectedTab 
 	kavName = kavName or "Library"
 	table.insert(Kavo, kavName)
+	for i,v in pairs(game.Players.LocalPlayer.PlayerGui:GetChildren()) do
+		if v:IsA("ScreenGui") and v.Name == kavName then
+			v:Destroy()
+		end
+	end
 	local ScreenGui = Instance.new("ScreenGui")
 	local Main = Instance.new("Frame")
 	local MainCorner = Instance.new("UICorner")
@@ -2561,7 +2571,7 @@ function Kavo.CreateLib(kavName, themeList)
 							ImageTransparency = 0
 						}):Play()
 						rainbow = true
-						rainbowconnection = rs.RenderStepped:Connect(function()
+						rainbowconnection = rs.PreRender:Connect(function()
 							setrgbcolor({zigzag(counter),1,1})
 							counter = counter + 0.01
 						end)
@@ -2659,10 +2669,355 @@ local Window = Library.CreateLib("felix.gg", "Synapse")
 
 -- // Combat
 local Combat = Window:NewTab("Combat")
-local Combat_Section1 = Combat:NewSection("Section Name")
+local Combat_Section1 = Combat:NewSection("Melees")
 
-local Combat_Button1 = Combat_Section1:NewButton("ButtonText", "ButtonInfo", function()
-	print("Clicked")
+_G.HitboxVisible = false
+local HitboxVisibleToggler = Combat_Section1:NewToggle("Hitbox Expander Visible", "For debug purposes.", function(state)
+	if state then
+		_G.HitboxVisible = true
+	else
+		_G.HitboxVisible = false
+	end
+end)
+
+local HitboxExpanderToggle = Combat_Section1:NewButton("Melee Hitbox Expander", "MUST HAVE AN MELEE EQUIPPED.", function()
+	local Character = Self.Character
+	if Character then
+		local Melee = Character:FindFirstChildOfClass("Tool")
+		if Melee then
+			local Handle = Melee:FindFirstChild("Handle") or Melee:FindFirstChild("WeaponHandle")
+			if Handle then
+				for i,v in pairs(Handle:GetDescendants()) do
+					if v:IsA("Attachment") and v.Name == "DmgPoint" and not (v:HasTag("expanded")) then
+						for i = 1, 5 do
+							local nv = v:Clone()nv:AddTag("expanded")
+							nv.Parent = v.Parent
+							nv.WorldPosition = v.WorldPosition + Vector3.new(i,0,0)
+							task.spawn(function() RunService.PreRender:Connect(function() nv.Visible = _G.HitboxVisible end) end)
+						end
+						for i = 1, 5 do
+							local nv = v:Clone()nv:AddTag("expanded")
+							nv.Parent = v.Parent
+							nv.WorldPosition = v.WorldPosition - Vector3.new(i,0,0)
+							task.spawn(function() RunService.PreRender:Connect(function() nv.Visible = _G.HitboxVisible end) end)
+						end
+						for i = 1, 5 do
+							local nv = v:Clone()nv:AddTag("expanded")
+							nv.Parent = v.Parent
+							nv.WorldPosition = v.WorldPosition + Vector3.new(0,0,i)
+							task.spawn(function() RunService.PreRender:Connect(function() nv.Visible = _G.HitboxVisible end) end)
+						end
+						for i = 1, 5 do
+							local nv = v:Clone()nv:AddTag("expanded")
+							nv.Parent = v.Parent
+							nv.WorldPosition = v.WorldPosition - Vector3.new(0,0,i)
+							task.spawn(function() RunService.PreRender:Connect(function() nv.Visible = _G.HitboxVisible end) end)
+						end
+						for i = 1, 5 do
+							local nv = v:Clone()nv:AddTag("expanded")
+							nv.Parent = v.Parent
+							nv.WorldPosition = v.WorldPosition + Vector3.new(0,i,0)
+							task.spawn(function() RunService.PreRender:Connect(function() nv.Visible = _G.HitboxVisible end) end)
+						end
+						for i = 1, 5 do
+							local nv = v:Clone()nv:AddTag("expanded")
+							nv.Parent = v.Parent
+							nv.WorldPosition = v.WorldPosition - Vector3.new(0,i,0)
+							task.spawn(function() RunService.PreRender:Connect(function() nv.Visible = _G.HitboxVisible end) end)
+						end
+					end
+				end
+			else
+				local Arm = Character:FindFirstChild("Right Arm")
+				if (Arm and Arm ~= nil) then
+					for i,v in pairs(Arm:GetDescendants()) do
+						if v:IsA("Attachment") and v.Name == "DmgPoint" and not (v:HasTag("expanded")) then
+							for i = 1, 5 do
+								local nv = v:Clone()nv:AddTag("expanded")
+								nv.Parent = v.Parent
+								nv.WorldPosition = v.WorldPosition + Vector3.new(i,0,0)
+								task.spawn(function() RunService.PreRender:Connect(function() nv.Visible = _G.HitboxVisible end) end)
+							end
+							for i = 1, 5 do
+								local nv = v:Clone()nv:AddTag("expanded")
+								nv.Parent = v.Parent
+								nv.WorldPosition = v.WorldPosition - Vector3.new(i,0,0)
+								task.spawn(function() RunService.PreRender:Connect(function() nv.Visible = _G.HitboxVisible end) end)
+							end
+							for i = 1, 5 do
+								local nv = v:Clone()nv:AddTag("expanded")
+								nv.Parent = v.Parent
+								nv.WorldPosition = v.WorldPosition + Vector3.new(0,0,i)
+								task.spawn(function() RunService.PreRender:Connect(function() nv.Visible = _G.HitboxVisible end) end)
+							end
+							for i = 1, 5 do
+								local nv = v:Clone()nv:AddTag("expanded")
+								nv.Parent = v.Parent
+								nv.WorldPosition = v.WorldPosition - Vector3.new(0,0,i)
+								task.spawn(function() RunService.PreRender:Connect(function() nv.Visible = _G.HitboxVisible end) end)
+							end
+							for i = 1, 5 do
+								local nv = v:Clone()nv:AddTag("expanded")
+								nv.Parent = v.Parent
+								nv.WorldPosition = v.WorldPosition + Vector3.new(0,i,0)
+								task.spawn(function() RunService.PreRender:Connect(function() nv.Visible = _G.HitboxVisible end) end)
+							end
+							for i = 1, 5 do
+								local nv = v:Clone()nv:AddTag("expanded")
+								nv.Parent = v.Parent
+								nv.WorldPosition = v.WorldPosition - Vector3.new(0,i,0)
+								task.spawn(function() RunService.PreRender:Connect(function() nv.Visible = _G.HitboxVisible end) end)
+							end
+						end
+					end
+				end
+			end
+		else
+			local Arm = Character:FindFirstChild("Right Arm")
+			if (Arm and Arm ~= nil) then
+				for i,v in pairs(Arm:GetDescendants()) do
+					if v:IsA("Attachment") and v.Name == "DmgPoint" and not (v:HasTag("expanded")) then
+						for i = 1, 5 do
+							local nv = v:Clone()nv:AddTag("expanded")
+							nv.Parent = v.Parent
+							nv.WorldPosition = v.WorldPosition + Vector3.new(i,0,0)
+							task.spawn(function() RunService.PreRender:Connect(function() nv.Visible = _G.HitboxVisible end) end)
+						end
+						for i = 1, 5 do
+							local nv = v:Clone()nv:AddTag("expanded")
+							nv.Parent = v.Parent
+							nv.WorldPosition = v.WorldPosition - Vector3.new(i,0,0)
+							task.spawn(function() RunService.PreRender:Connect(function() nv.Visible = _G.HitboxVisible end) end)
+						end
+						for i = 1, 5 do
+							local nv = v:Clone()nv:AddTag("expanded")
+							nv.Parent = v.Parent
+							nv.WorldPosition = v.WorldPosition + Vector3.new(0,0,i)
+							task.spawn(function() RunService.PreRender:Connect(function() nv.Visible = _G.HitboxVisible end) end)
+						end
+						for i = 1, 5 do
+							local nv = v:Clone()nv:AddTag("expanded")
+							nv.Parent = v.Parent
+							nv.WorldPosition = v.WorldPosition - Vector3.new(0,0,i)
+							task.spawn(function() RunService.PreRender:Connect(function() nv.Visible = _G.HitboxVisible end) end)
+						end
+						for i = 1, 5 do
+							local nv = v:Clone()nv:AddTag("expanded")
+							nv.Parent = v.Parent
+							nv.WorldPosition = v.WorldPosition + Vector3.new(0,i,0)
+							task.spawn(function() RunService.PreRender:Connect(function() nv.Visible = _G.HitboxVisible end) end)
+						end
+						for i = 1, 5 do
+							local nv = v:Clone()nv:AddTag("expanded")
+							nv.Parent = v.Parent
+							nv.WorldPosition = v.WorldPosition - Vector3.new(0,i,0)
+							task.spawn(function() RunService.PreRender:Connect(function() nv.Visible = _G.HitboxVisible end) end)
+						end
+					end
+				end
+			end
+		end
+	end
+end)
+
+_G.MeleeAuraToggled = false
+local MeleeAuraToggler = Combat_Section1:NewToggle("Melee Kill Aura", "REALLY OP || only works if ur near someone", function(state)
+	if state then
+		_G.MeleeAuraToggled = true
+	else
+		_G.MeleeAuraToggled = false
+	end
+end)
+
+task.spawn(function()
+	
+	local function findNearestHead(player)
+		local charactersFolder = workspace:WaitForChild("Characters")
+		if not charactersFolder then
+			return nil
+		end
+
+		local character = charactersFolder:FindFirstChild(player.Name)
+		if not character then
+			return nil
+		end
+
+		local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+		if not humanoidRootPart then
+			return nil
+		end
+
+		local nearestHead = nil
+		local minDistance = math.huge  -- Start with a large number
+
+		for _, part in pairs(workspace:WaitForChild("Characters"):GetDescendants()) do
+			if part:IsA("BasePart") and part.Name == "Head" and not (part.Parent == character) then
+				local distance = (part.Position - humanoidRootPart.Position).magnitude
+				if distance < minDistance then
+					minDistance = distance
+					nearestHead = part
+				end
+			end
+		end
+
+		return nearestHead
+	end
+	RunService.PreRender:Connect(function()
+		if _G.MeleeAuraToggled == true then
+			local c = Self.Character
+			if c then
+				local hrp = c:FindFirstChild("HumanoidRootPart")
+				local t = c:FindFirstChildOfClass("Tool")
+				if t then
+					local h = t:FindFirstChild("Handle") or t:FindFirstChild("WeaponHandle")
+					if h then
+						local dmgpoints = {}
+						for i,v in pairs(h:GetChildren()) do
+							if v:IsA("Attachment") and v.Name == "DmgPoint" then
+								table.insert(dmgpoints, v)
+							end
+						end
+						for i,v in pairs(dmgpoints) do
+							if hrp then
+								local nearestHead = findNearestHead(Self)
+
+								if nearestHead then
+									print("Nearest 'Head' part is at:", nearestHead.Position)
+									v.WorldPosition = nearestHead.Position
+								else
+									print("No 'Head' part found.")
+								end
+							end
+						end
+					else
+						local rarm = c:FindFirstChild("Right Arm")
+						if rarm then
+							local dmgpoints = {}
+							for i,v in pairs(rarm:GetChildren()) do
+								if v:IsA("Attachment") and v.Name == "DmgPoint" then
+									table.insert(dmgpoints, v)
+								end
+							end
+							for i,v in pairs(dmgpoints) do
+								if hrp then
+									local nearestHead = findNearestHead(Self)
+
+									if nearestHead then
+										print("Nearest 'Head' part is at:", nearestHead.Position)
+										v.WorldPosition = nearestHead.Position
+									else
+										print("No 'Head' part found.")
+									end
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+	end)
+end)
+
+_G.ProjectileControlToggled = false
+local ProjectileControlToggler = Combat_Section1:NewToggle("Projectile Control", "Lets you control projectiles.", function(state)
+	if state then
+		_G.ProjectileControlToggled = true
+	else
+		_G.ProjectileControlToggled = false
+	end
+end)
+
+_G.ProjectileSpeed = 0
+local ProjectileSpeedBox = Combat_Section1:NewTextBox("Projectile Control Speed", "Defines how fast you will fly with projectiles.", function(txt)
+	_G.ProjectileSpeed = tonumber(txt)
+end)
+
+local UserInputService = game:GetService("UserInputService")
+local camera = Workspace.CurrentCamera
+
+local forward = 0
+local sideways = 0
+
+UserInputService.InputBegan:Connect(function(inp)
+	inp = inp.KeyCode
+	if inp == Enum.KeyCode.W then
+		forward = 1
+	elseif inp == Enum.KeyCode.S then
+		forward = -1
+	elseif inp == Enum.KeyCode.D then
+		sideways = 1
+	elseif inp == Enum.KeyCode.A then
+		sideways = -1	
+	end
+end)
+UserInputService.InputEnded:Connect(function(inp)
+	inp = inp.KeyCode
+	if inp == Enum.KeyCode.W then
+		forward = 0
+	elseif inp == Enum.KeyCode.S then
+		forward = 0
+	elseif inp == Enum.KeyCode.D then
+		sideways = 0
+	elseif inp == Enum.KeyCode.A then
+		sideways = 0	
+	end
+end)
+
+local function controlProjectile(projectile: Part)
+	local char = Self.Character
+	
+	if char then
+		local hrp = char:FindFirstChild("HumanoidRootPart")
+		if hrp then
+			hrp.Anchored = true
+		end
+	end
+	
+	for i,v:Instance in pairs(projectile:GetDescendants()) do
+		if v:IsA("LinearVelocity") or v:IsA("AngularVelocity") or v:IsA("BodyVelocity") or v:IsA("BodyGyro") or v:IsA("BodyForce") or v:IsA("BodyThrust") or v:IsA("BodyPosition") or v:IsA("BodyAngularVelocity") or v:IsA("BodyMover") then
+			task.defer(v.Destroy, v)
+		end
+	end
+	
+	local BV = Instance.new("BodyVelocity", projectile)
+	BV.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+	BV.Velocity = Vector3.new()
+
+	local BG = Instance.new("BodyGyro", projectile)
+	BG.P = 9e4
+	BG.MaxTorque = Vector3.new(1e9, 1e9, 1e9)
+	
+	print("controlling ".. projectile.Name)
+	task.spawn(function()
+		camera.CameraSubject = projectile
+		if char then
+		local hum = char:FindFirstChildOfClass("Humanoid")
+		if hum then
+				projectile.Destroying:Connect(function()
+					camera.CameraSubject = hum
+					if char then
+						local hrp = char:FindFirstChild("HumanoidRootPart")
+						if hrp then
+							hrp.Anchored = false
+						end
+					end
+				end)
+		end
+		end
+		
+		RunService.PreRender:Connect(function()
+			BG.CFrame = camera.CoordinateFrame
+			BV.Velocity = ((camera.CFrame.LookVector * forward) + (camera.CFrame.RightVector * sideways)) * _G.ProjectileSpeed
+		end)
+	end)
+end
+
+task.spawn(function()
+	Workspace:WaitForChild("Debris").DescendantAdded:Connect(function(v)
+		if (v.Name == "Snowball" or v.Name == "RPG_Rocket" or v.Name == "FireworkLauncher_Rocket" or v.Name == "Hallowsw_Rocket2" or v.Name == "Panzer_Rocket" or v.Name == "TransIgnore" or v.Name == "GrenadeLauncherGrenade" or v.Name == "SBL_Rocket" or v.Name == "SpitBall" or v.Name == "Effect") and v:IsA("BasePart") then
+			controlProjectile(v)
+		end
+	end)
 end)
 
 -- // Movement
@@ -2770,6 +3125,7 @@ ViewmodelHighlight.Name = "ViewmodelHighlight"
 local WorldHighlight = Instance.new("Highlight", Workspace)
 WorldHighlight.Name = "WorldHighlight"
 WorldHighlight.DepthMode = Enum.HighlightDepthMode.Occluded
+
 
 
 _G.SelfHighlightToggled = false
@@ -2902,7 +3258,444 @@ task.spawn(function(WorldHighlightFunction)
 	end)
 end)
 
+-- rebel dealer esp
 
+_G.RebelESP = false
+local RebelESPToggle = WorldSection:NewToggle("Rebel Dealer Chams", "Draws chams around the Rebel Dealer, to easily spot him.", function(state)
+	if state then
+		_G.RebelESP = true
+	else
+		_G.RebelESP = false
+	end
+end)
+
+_G.RebelChamsTransparency = 0
+local RebelChamsTransparencyBox = WorldSection:NewTextBox("Rebel Dealer Chams Transparency", "Defines the transparency of the rebel dealer chams.", function(txt)
+	_G.RebelChamsTransparency = tonumber(txt)
+end)
+_G.RebelChamsColor = Color3.fromRGB(0,0,0)
+local RebelChamsColorPicker = WorldSection:NewColorPicker("Rebel Dealer Chams Color", "Defines the color of the rebel dealer chams.", Color3.fromRGB(0,0,0), function(color)
+	_G.RebelChamsColor = color
+end)
+
+task.spawn(function(rebeldealeresp)
+	RunService.PreRender:Connect(function()
+		local mapfolder = Workspace:FindFirstChild("Map")
+		if (mapfolder) then
+			local Shopz = mapfolder:FindFirstChild("Shopz")
+			if (Shopz) then
+				local RebelDealer = Shopz:FindFirstChild("RebelDealer")
+				if (RebelDealer) then
+					local DealerMan = RebelDealer:FindFirstChild("DealerMan")
+					if (DealerMan) then
+						if not (DealerMan:HasTag("chams")) then
+							DealerMan:AddTag("chams")
+							for i,v in pairs(DealerMan:GetDescendants()) do
+								if v:IsA("BasePart") then
+									local newcham = Instance.new("BoxHandleAdornment", v)
+									newcham.Adornee = v
+									newcham.Visible = false
+									newcham.AlwaysOnTop = true
+									newcham.ZIndex = 1
+									task.spawn(function()
+										RunService.PreRender:Connect(function()
+											if newcham then
+												newcham.Visible = _G.RebelESP
+												newcham.Color3 = _G.RebelChamsColor
+												newcham.Transparency = _G.RebelChamsTransparency
+												newcham.Size = v.Size
+											end
+										end)
+									end)
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+	end)
+end)
+
+-- dealers esp
+
+_G.DealerESP = false
+local DealerESPToggle = WorldSection:NewToggle("Dealer Chams", "Draws chams around any Dealer, to easily spot them.", function(state)
+	if state then
+		_G.DealerESP = true
+	else
+		_G.DealerESP = false
+	end
+end)
+
+_G.DealerESPTransparency = 0
+local DealerESPTransparencyBox = WorldSection:NewTextBox("Dealer Chams Transparency", "Defines the transparency of the dealer chams.", function(txt)
+	_G.DealerESPTransparency = tonumber(txt)
+end)
+_G.DealerChamsColor = Color3.fromRGB(0,0,0)
+local DealerChamsColorPicker = WorldSection:NewColorPicker("Dealer Chams Color", "Defines the color of the dealer chams.", Color3.fromRGB(0,0,0), function(color)
+	_G.DealerChamsColor = color
+end)
+
+local Dealers = {}
+
+for i,v in pairs(Workspace:WaitForChild("Map"):WaitForChild("Shopz"):GetChildren()) do
+	if v.Name == "ArmoryDealer" or v.Name == "Dealer" then
+		table.insert(Dealers, v)
+	end
+end
+
+
+Workspace:WaitForChild("Map"):WaitForChild("Shopz").ChildAdded:Connect(function(v)
+	if v.Name == "ArmoryDealer" or v.Name == "Dealer" then
+		table.insert(Dealers, v)
+	end
+end)
+
+task.spawn(function()
+	RunService.PreRender:Connect(function()
+		for i,v in pairs(Dealers) do
+			if not (v:HasTag("chams")) then
+				v:AddTag("chams")
+				for _, z in pairs(v:GetDescendants()) do
+					if z:IsA("BasePart") then
+						local newcham = Instance.new("BoxHandleAdornment", z)
+						newcham.Adornee = z
+						newcham.Visible = false
+						newcham.AlwaysOnTop = true
+						newcham.ZIndex = 1
+						task.spawn(function()
+							RunService.PreRender:Connect(function()
+								if newcham then
+									newcham.Visible = _G.DealerESP
+									newcham.Color3 = _G.DealerChamsColor
+									newcham.Transparency = _G.DealerESPTransparency
+									newcham.Size = z.Size
+								end
+							end)
+						end)
+					end
+				end
+			end
+		end
+	end)
+end)
+
+-- atm esp
+
+_G.ATMChams = false
+local ATMChamsToggle = WorldSection:NewToggle("ATM Chams", "Draws chams around any ATM, to easily spot them.", function(state)
+	if state then
+		_G.ATMChams = true
+	else
+		_G.ATMChams = false
+	end
+end)
+
+_G.ATMChamsTransparency = 0
+local ATMChamsTransparencyBox = WorldSection:NewTextBox("ATM Chams Transparency", "Defines the transparency of the ATM chams.", function(txt)
+	_G.ATMChamsTransparency = tonumber(txt)
+end)
+_G.ATMChamsColor = Color3.fromRGB(0,0,0)
+local ATMChamsColor = WorldSection:NewColorPicker("ATM Chams Color", "Defines the color of the ATM chams.", Color3.fromRGB(0,0,0), function(color)
+	_G.ATMChamsColor = color
+end)
+
+local ATMS = {}
+
+for i,v in pairs(Workspace:WaitForChild("Map"):WaitForChild("ATMz"):GetChildren()) do
+	if v.Name == "ATM" then
+		table.insert(ATMS, v)
+	end
+end
+
+
+Workspace:WaitForChild("Map"):WaitForChild("ATMz").ChildAdded:Connect(function(v)
+	if v.Name == "ATM" then
+		table.insert(ATMS, v)
+	end
+end)
+
+task.spawn(function()
+	RunService.PreRender:Connect(function()
+		for i,v in pairs(ATMS) do
+			if not (v:HasTag("chams")) then
+				v:AddTag("chams")
+				for _, z in pairs(v:GetDescendants()) do
+					if z:IsA("BasePart") then
+						local newcham = Instance.new("BoxHandleAdornment", z)
+						newcham.Adornee = z
+						newcham.Visible = false
+						newcham.AlwaysOnTop = true
+						newcham.ZIndex = 1
+						task.spawn(function()
+							RunService.PreRender:Connect(function()
+								if newcham then
+									newcham.Visible = _G.ATMChams
+									newcham.Color3 = _G.ATMChamsColor
+									newcham.Transparency = _G.ATMChamsTransparency
+									newcham.Size = z.Size
+								end
+							end)
+						end)
+					end
+				end
+			end
+		end
+	end)
+end)
+
+-- money esp
+
+_G.MoneyChams = false
+local MoneyChamsToggle = WorldSection:NewToggle("Money Chams", "Draws chams around any dropped money, to easily spot them.", function(state)
+	if state then
+		_G.MoneyChams = true
+	else
+		_G.MoneyChams = false
+	end
+end)
+
+_G.MoneyChamsTransparency = 0
+local MoneyChamsTransparencyBox = WorldSection:NewTextBox("Money Chams Transparency", "Defines the transparency of the money chams.", function(txt)
+	_G.MoneyChamsTransparency = tonumber(txt)
+end)
+_G.MoneyChamsColor = Color3.fromRGB(0,0,0)
+local MoneyChamsColorPicker = WorldSection:NewColorPicker("Money Chams Color", "Defines the color of the money chams.", Color3.fromRGB(0,0,0), function(color)
+	_G.MoneyChamsColor = color
+end)
+
+local Money = {}
+
+for i,v in pairs(Workspace:WaitForChild("Filter"):WaitForChild("SpawnedBread"):GetChildren()) do
+	if string.find(v.Name, "Drop") then
+		table.insert(Money, v)
+	end
+end
+
+
+Workspace:WaitForChild("Filter"):WaitForChild("SpawnedBread").ChildAdded:Connect(function(v)
+	if string.find(v.Name, "Drop") then
+		table.insert(Money, v)
+	end
+end)
+
+task.spawn(function()
+	RunService.PreRender:Connect(function()
+		for i,v in pairs(Money) do
+			if not (v:HasTag("chams")) then
+				v:AddTag("chams")
+				local newcham = Instance.new("BoxHandleAdornment", v)
+				newcham.Adornee = v
+				newcham.Visible = false
+				newcham.AlwaysOnTop = true
+				newcham.ZIndex = 1
+				task.spawn(function()
+					RunService.PreRender:Connect(function()
+						if newcham then
+							newcham.Visible = _G.MoneyChams
+							newcham.Color3 = _G.MoneyChamsColor
+							newcham.Transparency = _G.MoneyChamsTransparency
+							newcham.Size = v.Size
+						end
+					end)
+				end)
+				end
+		end
+	end)
+end)
+
+-- safe/register esp
+
+_G.SafeRegisterESP = false
+local SafeRegisterESPToggle = WorldSection:NewToggle("Safe/Register Chams", "Draws chams around any safe/register, to easily spot them.", function(state)
+	if state then
+		_G.SafeRegisterESP = true
+	else
+		_G.SafeRegisterESP = false
+	end
+end)
+
+_G.SafeRegisterESPTransparency = 0
+local SafeRegisterESPTransparencyBox = WorldSection:NewTextBox("Safe/Register Chams Transparency", "Defines the transparency of the safe/register chams.", function(txt)
+	_G.SafeRegisterESPTransparency = tonumber(txt)
+end)
+_G.SafeRegisterESPColor = Color3.fromRGB(0,0,0)
+local SafeRegisterESPColorPicker = WorldSection:NewColorPicker("Safe/Register Chams Color", "Defines the color of the safe/register chams.", Color3.fromRGB(0,0,0), function(color)
+	_G.SafeRegisterESPColor = color
+end)
+
+local SafeRegister = {}
+
+for i,v in pairs(Workspace:WaitForChild("Map"):WaitForChild("BredMakurz"):GetChildren()) do
+	if v:IsA("Model") then
+		table.insert(SafeRegister, v)
+	end
+end
+
+
+Workspace:WaitForChild("Map"):WaitForChild("BredMakurz").ChildAdded:Connect(function(v)
+	if v:IsA("Model") then
+		table.insert(SafeRegister, v)
+	end
+end)
+
+task.spawn(function()
+	RunService.PreRender:Connect(function()
+		for i,v in pairs(SafeRegister) do
+			if not (v:HasTag("chams")) then
+				v:AddTag("chams")
+				for _, z in pairs(v:GetDescendants()) do
+					if z:IsA("BasePart") then
+						local newcham = Instance.new("BoxHandleAdornment", z)
+						newcham.Adornee = z
+						newcham.Visible = false
+						newcham.AlwaysOnTop = true
+						newcham.ZIndex = 1
+						task.spawn(function()
+							RunService.PreRender:Connect(function()
+								if newcham then
+									newcham.Visible = _G.SafeRegisterESP
+									newcham.Color3 = _G.SafeRegisterESPColor
+									newcham.Transparency = _G.SafeRegisterESPTransparency
+									newcham.Size = z.Size
+								end
+							end)
+						end)
+					end
+				end
+			end
+		end
+	end)
+end)
+
+-- tools esp
+
+_G.ToolsESP = false
+local ToolsESPToggle = WorldSection:NewToggle("Dropped Tools Chams", "Draws chams around any dropped tool, to easily spot them.", function(state)
+	if state then
+		_G.ToolsESP = true
+	else
+		_G.ToolsESP = false
+	end
+end)
+
+_G.ToolsESPTransparency = 0
+local ToolsESPTransparencyBox = WorldSection:NewTextBox("Dropped Tools Chams Transparency", "Defines the transparency of the dropped tools chams.", function(txt)
+	_G.ToolsESPTransparency = tonumber(txt)
+end)
+_G.ToolsESPColor = Color3.fromRGB(0,0,0)
+local ToolsESPColorPicker = WorldSection:NewColorPicker("Droped Tools Chams Color", "Defines the color of the droped tools chams.", Color3.fromRGB(0,0,0), function(color)
+	_G.ToolsESPColor = color
+end)
+
+local DroppedTools = {}
+
+for i,v in pairs(Workspace:WaitForChild("Filter"):WaitForChild("SpawnedTools"):GetChildren()) do
+	if v:IsA("Model") then
+		table.insert(DroppedTools, v)
+	end
+end
+
+
+Workspace:WaitForChild("Filter"):WaitForChild("SpawnedTools").ChildAdded:Connect(function(v)
+	if v:IsA("Model") then
+		table.insert(DroppedTools, v)
+	end
+end)
+
+task.spawn(function()
+	RunService.PreRender:Connect(function()
+		for i,v in pairs(DroppedTools) do
+			if not (v:HasTag("chams")) then
+				v:AddTag("chams")
+				for _, z in pairs(v:GetDescendants()) do
+					if z:IsA("BasePart") then
+						local newcham = Instance.new("BoxHandleAdornment", z)
+						newcham.Adornee = z
+						newcham.Visible = false
+						newcham.AlwaysOnTop = true
+						newcham.ZIndex = 1
+						task.spawn(function()
+							RunService.PreRender:Connect(function()
+								if newcham then
+									newcham.Visible = _G.ToolsESP
+									newcham.Color3 = _G.ToolsESPColor
+									newcham.Transparency = _G.ToolsESPTransparency
+									newcham.Size = z.Size
+								end
+							end)
+						end)
+					end
+				end
+			end
+		end
+	end)
+end)
+
+-- scrap esp
+
+_G.ScrapESP = false
+local ScrapESPToggle = WorldSection:NewToggle("Scrap Chams", "Draws chams around any scrap, to easily spot them.", function(state)
+	if state then
+		_G.ScrapESP = true
+	else
+		_G.ScrapESP = false
+	end
+end)
+
+_G.ScrapESPTransparency = 0
+local ScrapESPTransparencyBox = WorldSection:NewTextBox("Scrap Chams Transparency", "Defines the transparency of the scrap chams.", function(txt)
+	_G.ScrapESPTransparency = tonumber(txt)
+end)
+_G.ScrapESPColor = Color3.fromRGB(0,0,0)
+local ScrapESPColorPicker = WorldSection:NewColorPicker("Scrap Chams Color", "Defines the color of the scrap chams.", Color3.fromRGB(0,0,0), function(color)
+	_G.ScrapESPColor = color
+end)
+
+local Scraps = {}
+
+for i,v in pairs(Workspace:WaitForChild("Filter"):WaitForChild("SpawnedPiles"):GetChildren()) do
+	if v:IsA("Model") then
+		table.insert(Scraps, v)
+	end
+end
+
+
+Workspace:WaitForChild("Filter"):WaitForChild("SpawnedPiles").ChildAdded:Connect(function(v)
+	if v:IsA("Model") then
+		table.insert(Scraps, v)
+	end
+end)
+
+task.spawn(function()
+	RunService.PreRender:Connect(function()
+		for i,v in pairs(Scraps) do
+			if not (v:HasTag("chams")) then
+				v:AddTag("chams")
+				for _, z in pairs(v:GetDescendants()) do
+					if z:IsA("BasePart") then
+						local newcham = Instance.new("BoxHandleAdornment", z)
+						newcham.Adornee = z
+						newcham.Visible = false
+						newcham.AlwaysOnTop = true
+						newcham.ZIndex = 1
+						task.spawn(function()
+							RunService.PreRender:Connect(function()
+								if newcham then
+									newcham.Visible = _G.ScrapESP
+									newcham.Color3 = _G.ScrapESPColor
+									newcham.Transparency = _G.ScrapESPTransparency
+									newcham.Size = z.Size
+								end
+							end)
+						end)
+					end
+				end
+			end
+		end
+	end)
+end)
 
 
 -- // Rage
@@ -3003,152 +3796,6 @@ local UnbreakableLimbsToggle = SelfSection:NewToggle("Unbreakable Limbs", "Your 
 		_G.UnbreakableLimbsToggled = true
 	else
 		_G.UnbreakableLimbsToggled = false
-	end
-end)
-
-local HitboxExpanderToggle = SelfSection:NewButton("Hitbox Expander ", "Loops teleports all your limbs to your mouse.", function()
-	local Character = Self.Character
-	if (Character and Character ~= nil) then
-		local RightArm = Character:FindFirstChild("Right Arm")
-		local RightLeg = Character:FindFirstChild("Right Leg")
-		local LeftArm = Character:FindFirstChild("Left Arm")
-		local LeftLeg = Character:FindFirstChild("Left Leg")
-		local Torso = Character:FindFirstChild("Torso")
-		local Tool = Character:FindFirstChildOfClass("Tool")
-		if (RightArm and RightArm ~= nil) then
-			if (Torso and Torso ~= nil) then
-				local RightShoulder:Motor6D = Torso:FindFirstChild("Right Shoulder")
-				RightShoulder.Enabled = false
-				RightArm.Anchored = true
-				local Attachment = Torso:FindFirstChild("Torso_Right Arm")
-				if (Attachment and Attachment ~= nil) then
-					task.defer(Attachment.Remove, Attachment)
-				end
-				local Attachment2 = Torso:FindFirstChild("RGAB_Right Shoulder")
-				if (Attachment2 and Attachment2 ~= nil) then
-					task.defer(Attachment2.Remove, Attachment2)
-				end
-				
-				task.spawn(function()
-					local armconnection = RunService.PreRender:Connect(function()
-						if (RightArm and RightArm ~= nil) then
-							local Mouse = Self:GetMouse()
-							RightArm.Position = Mouse.Hit.Position
-							RightArm.Orientation = Vector3.new(
-								math.random(-360,360),
-								math.random(-360,360),
-								math.random(-360,360)
-							)
-						end
-					end)
-				end)
-			end
-		end
-		if (RightLeg and RightLeg ~= nil) then
-			if (Torso and Torso ~= nil) then
-				local RightHip:Motor6D = Torso:FindFirstChild("Right Hip")
-				RightHip.Enabled = false
-				RightLeg.Anchored = true
-				local Attachment = Torso:FindFirstChild("Torso_Right Leg")
-				if (Attachment and Attachment ~= nil) then
-					task.defer(Attachment.Remove, Attachment)
-				end
-				local Attachment2 = Torso:FindFirstChild("RGAB_Right Hip")
-				if (Attachment2 and Attachment2 ~= nil) then
-					task.defer(Attachment2.Remove, Attachment2)
-				end
-
-				task.spawn(function()
-					local armconnection = RunService.PreRender:Connect(function()
-						if (RightLeg and RightLeg ~= nil) then
-							local Mouse = Self:GetMouse()
-							RightLeg.Position = Mouse.Hit.Position
-							RightLeg.Orientation = Vector3.new(
-								math.random(-360,360),
-								math.random(-360,360),
-								math.random(-360,360)
-							)
-						end
-					end)
-				end)
-			end
-		end
-		if (LeftArm and LeftArm ~= nil) then
-			if (Torso and Torso ~= nil) then
-				local LeftShoulder:Motor6D = Torso:FindFirstChild("Left Shoulder")
-				LeftShoulder.Enabled = false
-				LeftArm.Anchored = true
-				local Attachment = Torso:FindFirstChild("Torso_Left Arm")
-				if (Attachment and Attachment ~= nil) then
-					task.defer(Attachment.Remove, Attachment)
-				end
-				local Attachment2 = Torso:FindFirstChild("RGAB_Left Shoulder")
-				if (Attachment2 and Attachment2 ~= nil) then
-					task.defer(Attachment2.Remove, Attachment2)
-				end
-
-				task.spawn(function()
-					local armconnection = RunService.PreRender:Connect(function()
-						if (LeftArm and LeftArm ~= nil) then
-							local Mouse = Self:GetMouse()
-							LeftArm.Position = Mouse.Hit.Position
-							LeftArm.Orientation = Vector3.new(
-								math.random(-360,360),
-								math.random(-360,360),
-								math.random(-360,360)
-							)
-						end
-					end)
-				end)
-			end
-		end
-		if (LeftLeg and LeftLeg ~= nil) then
-			if (Torso and Torso ~= nil) then
-				local LeftHip:Motor6D = Torso:FindFirstChild("Left Hip")
-				LeftHip.Enabled = false
-				LeftLeg.Anchored = true
-				local Attachment = Torso:FindFirstChild("Torso_Left Leg")
-				if (Attachment and Attachment ~= nil) then
-					task.defer(Attachment.Remove, Attachment)
-				end
-				local Attachment2 = Torso:FindFirstChild("RGAB_Left Hip")
-				if (Attachment2 and Attachment2 ~= nil) then
-					task.defer(Attachment2.Remove, Attachment2)
-				end
-
-				task.spawn(function()
-					local armconnection = RunService.PreRender:Connect(function()
-						if (LeftLeg and LeftLeg ~= nil) then
-							local Mouse = Self:GetMouse()
-							LeftLeg.Position = Mouse.Hit.Position
-							LeftLeg.Orientation = Vector3.new(
-								math.random(-360,360),
-								math.random(-360,360),
-								math.random(-360,360)
-							)
-						end
-					end)
-				end)
-			end
-		end
-		if (Tool and Tool ~= nil) then
-			local Handle = Tool:FindFirstChild("Handle")
-			if (Handle and Handle ~= nil) then
-				task.spawn(function()
-					local armconnection = RunService.PreRender:Connect(function()
-						if (Handle and Handle ~= nil) then
-							local Mouse = Self:GetMouse()
-							Handle.Position = Mouse.Hit.Position
-							Handle.Orientation = Vector3.new(
-								math.random(-360,360),
-								math.random(-360,360),
-								math.random(-360,360)
-							)
-						end
-					end)
-				end)
-			end
-		end
 	end
 end)
 
@@ -3555,3 +4202,6 @@ for theme, color in pairs(LibraryThemes) do
 		Library:ChangeColor(theme, color3)
 	end)
 end
+Settings_UI:NewKeybind("Toggle UI", "Defines a keybind for toggling the UI's visibility.", Enum.KeyCode.Insert, function()
+	Library:ToggleUI()
+end)

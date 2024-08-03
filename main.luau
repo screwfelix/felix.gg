@@ -2935,7 +2935,9 @@ task.spawn(function()
 		end)
 	end
 	
-	local tooladded = workspace:WaitForChild("Characters").DescendantAdded:Connect(analyse)
+	Self.CharacterAdded:Connect(function(c)
+		local tooladded = c.ChildAdded:Connect(analyse)
+	end)
 	
 	RunService.PreRender:Connect(function()
 		local c = Self.Character

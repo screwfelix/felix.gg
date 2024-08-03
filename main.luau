@@ -2776,9 +2776,18 @@ local function findNearestLimb(player, partname)
 		local hrp = c:FindFirstChild("HumanoidRootPart")
 		if hrp then
 			for i, part in pairs(Workspace:GetPartBoundsInBox(hrp.CFrame, Vector3.new(25,25,25))) do
-				if part.Name == partname then
-					nearestPart = part
-					return nearestPart
+				if partname == "Random" then
+					local limbs = {"Head", "Torso", "Right Arm", "Left Arm", "Right Leg", "Left Leg"}
+					local selectedlimb = limbs[math.random(1,#limbs)]
+					if part.Name == selec then
+						nearestPart = part
+						return nearestPart
+					end
+				else
+					if part.Name == partname then
+						nearestPart = part
+						return nearestPart
+					end
 				end
 			end
 		end

@@ -2643,6 +2643,7 @@ function Kavo.CreateLib(kavName, themeList)
 	return Tabs
 end
 
+
 -- // Services
 local DataModel = game
 local Workspace = DataModel:GetService("Workspace")
@@ -2655,6 +2656,13 @@ local Lighting = DataModel:GetService("Lighting")
 
 -- // Variables
 local Self = Players.LocalPlayer
+
+local definitiveCharacter = Self.Character
+task.spawn(function()
+	RunService.PreRender:Connect(function()
+		definitiveCharacter = Self.Character
+	end)
+end)
 
 -- // Library
 local Library = Kavo
@@ -2769,24 +2777,42 @@ end)
 	return nearestHead
 end]]--
 
-local function findNearestLimb(player, partname)
+local function findNearestLimb(player, partname, maxdistance)
 	local c = player.Character
 	local nearestPart
 	if c then
 		local hrp = c:FindFirstChild("HumanoidRootPart")
 		if hrp then
-			for i, part in pairs(Workspace:GetPartBoundsInBox(hrp.CFrame, Vector3.new(25,25,25))) do
+			for i, part in pairs(Workspace:GetPartBoundsInBox(hrp.CFrame, Vector3.new(maxdistance,maxdistance,maxdistance))) do
 				if partname == "Random" then
 					local limbs = {"Head", "Torso", "Right Arm", "Left Arm", "Right Leg", "Left Leg"}
 					local selectedlimb = limbs[math.random(1,#limbs)]
-					if part.Name == selec then
-						nearestPart = part
-						return nearestPart
+					if part.Name == selectedlimb then
+						if not (part.Parent.Name == c.Name) then
+							if part.Parent then
+								local h = part.Parent:FindFirstChildOfClass("Humanoid")
+								if h then
+									if h.Health > 0 then
+										nearestPart = part
+										return nearestPart
+									end
+								end
+							end
+						end
 					end
 				else
 					if part.Name == partname then
-						nearestPart = part
-						return nearestPart
+						if not (part.Parent.Name == c.Name) then
+							if part.Parent then
+								local h = part.Parent:FindFirstChildOfClass("Humanoid")
+								if h then
+									if h.Health > 0 then
+										nearestPart = part
+										return nearestPart
+									end
+								end
+							end
+						end
 					end
 				end
 			end
@@ -2794,7 +2820,9 @@ local function findNearestLimb(player, partname)
 	end
 end
 
-task.spawn(function()
+local meleedmgpoints = {}
+
+--[[task.spawn(function()
 	RunService.PreRender:Connect(function()
 		if _G.MeleeAuraToggled == true then
 			local c = Self.Character
@@ -2804,15 +2832,14 @@ task.spawn(function()
 				if t then
 					local h = t:FindFirstChild("Handle") or t:FindFirstChild("WeaponHandle")
 					if h then
-						local dmgpoints = {}
 						for i,v in pairs(h:GetChildren()) do
 							if v:IsA("Attachment") and v.Name == "DmgPoint" then
-								table.insert(dmgpoints, v)
+								table.insert(meleedmgpoints, v)
 							end
 						end
-						for i,v in pairs(dmgpoints) do
+						for i,v in pairs(meleedmgpoints) do
 							if hrp then
-								local nearestHead = findNearestLimb(Self, _G.MeleeAuraHitpart)
+								local nearestHead = findNearestLimb(Self, _G.MeleeAuraHitpart, 25)
 
 								if nearestHead then
 									print("Nearest 'Head' part is at:", nearestHead.Position)
@@ -2823,34 +2850,33 @@ task.spawn(function()
 							end
 						end
 					else
-						local dmgpoints = {}
 						local rarm = c:FindFirstChild("Right Arm")
 						local larm = c:FindFirstChild("Left Arm")
 						local rleg = c:FindFirstChild("Right Leg")
 						if rarm then
 							for i,v in pairs(rarm:GetChildren()) do
 								if v:IsA("Attachment") and v.Name == "DmgPoint" then
-									table.insert(dmgpoints, v)
+									table.insert(meleedmgpoints, v)
 								end
 							end
 						end
 						if larm then
 							for i,v in pairs(larm:GetChildren()) do
 								if v:IsA("Attachment") and v.Name == "DmgPoint" then
-									table.insert(dmgpoints, v)
+									table.insert(meleedmgpoints, v)
 								end
 							end
 						end
 						if rleg then
 							for i,v in pairs(rleg:GetChildren()) do
 								if v:IsA("Attachment") and v.Name == "DmgPoint" then
-									table.insert(dmgpoints, v)
+									table.insert(meleedmgpoints, v)
 								end
 							end
 						end
-						for i,v in pairs(dmgpoints) do
+						for i,v in pairs(meleedmgpoints) do
 							if hrp then
-								local nearestHead = findNearestLimb(Self, _G.MeleeAuraHitpart)
+								local nearestHead = findNearestLimb(Self, _G.MeleeAuraHitpart, 25)
 
 								if nearestHead then
 									print("Nearest 'Head' part is at:", nearestHead.Position)
@@ -2859,6 +2885,70 @@ task.spawn(function()
 									print("No 'Head' part found.")
 								end
 							end
+						end
+					end
+				end
+			end
+		end
+	end)
+end)]]--
+
+task.spawn(function()
+	local function analyse(tool: Tool)
+		task.spawn(function()
+			task.wait(2)
+			if tool:IsA("Tool") then
+				print("Tool added: ".. tool.Name)
+				local handle = tool:FindFirstChild("Handle") or tool:FindFirstChild("WeaponHandle")
+				if handle then
+					print("Tool has a handle.")
+					for i, v in pairs(handle:GetChildren()) do
+						if v:IsA("Attachment") and v.Name == "DmgPoint" then
+							table.insert(meleedmgpoints, v)
+						end
+					end
+				else
+					print("Tool does not have a handle.")
+					local c = Self.Character
+					if c then
+						local arm1 = c:FindFirstChild("Right Arm")
+						local arm2 = c:FindFirstChild("Left Arm")
+						local leg1 = c:FindFirstChild("Right Leg")
+						for i, v in pairs(arm1:GetChildren()) do
+							if v:IsA("Attachment") and v.Name == "DmgPoint" then
+								table.insert(meleedmgpoints, v)
+							end
+						end
+						for i, v in pairs(arm2:GetChildren()) do
+							if v:IsA("Attachment") and v.Name == "DmgPoint" then
+								table.insert(meleedmgpoints, v)
+							end
+						end
+						for i, v in pairs(leg1:GetChildren()) do
+							if v:IsA("Attachment") and v.Name == "DmgPoint" then
+								table.insert(meleedmgpoints, v)
+							end
+						end
+					end
+				end
+			end
+		end)
+	end
+	
+	local tooladded = workspace:WaitForChild("Characters").DescendantAdded:Connect(analyse)
+	
+	RunService.PreRender:Connect(function()
+		local c = Self.Character
+		if c then
+			local hrp = c:FindFirstChild("HumanoidRootPart")
+			if hrp then
+				if _G.MeleeAuraToggled == true then
+					for i,v in pairs(meleedmgpoints) do
+						local nearestLimb = findNearestLimb(Self, _G.MeleeAuraHitpart, 25)
+
+						if nearestLimb then
+							v.Position = Vector3.zero
+							v.WorldCFrame = nearestLimb.CFrame
 						end
 					end
 				end
@@ -2996,7 +3086,7 @@ local function auraProjectile(projectile: Part)
 		RunService.PreRender:Connect(function()
 			BG.CFrame = camera.CoordinateFrame
 			BV.Velocity = ((camera.CFrame.LookVector * forward) + (camera.CFrame.RightVector * sideways)) * _G.ProjectileSpeed
-			local part = findNearestLimb(Self, _G.ProjectileAuraHitpart)
+			local part = findNearestLimb(Self, _G.ProjectileAuraHitpart, 30)
 			if part then
 				projectile.CFrame = part.CFrame
 			end
@@ -3253,6 +3343,56 @@ task.spawn(function(WorldHighlightFunction)
 			WorldHighlight.OutlineColor = _G.WorldHighlightOutlineColor
 		else
 			WorldHighlight.Enabled = false
+		end
+	end)
+end)
+
+-- player esp
+
+_G.PlayerESP = false
+local PlayerESPToggle = WorldSection:NewToggle("Player Chams", "Draws chams around players, to easily spot them.", function(state)
+	if state then
+		_G.PlayerESP = true
+	else
+		_G.PlayerESP = false
+	end
+end)
+
+_G.PlayerESPTransparency = 0
+local PlayerESPTransparencyBox = WorldSection:NewTextBox("Player Chams Transparency", "Defines the transparency of the player chams.", function(txt)
+	_G.PlayerESPTransparency = tonumber(txt)
+end)
+_G.PlayerESPColor = Color3.fromRGB(0,0,0)
+local PlayerESPColorPicker = WorldSection:NewColorPicker("Player Chams Color", "Defines the color of the player chams.", Color3.fromRGB(0,0,0), function(color)
+	_G.PlayerESPColor = color
+end)
+
+task.spawn(function()
+	RunService.PreRender:Connect(function()
+		local charactersfolder = Workspace:FindFirstChild("Characters")
+		for _, plr in pairs(charactersfolder:GetChildren()) do
+			if not (plr:HasTag("chams")) and not (plr.Name == Self.Name) then
+				plr:AddTag("chams")
+				for i,v in pairs(plr:GetDescendants()) do
+					if v:IsA("BasePart") then
+						local newcham = Instance.new("BoxHandleAdornment", v)
+						newcham.Adornee = v
+						newcham.Visible = false
+						newcham.AlwaysOnTop = true
+						newcham.ZIndex = 1
+						task.spawn(function()
+							RunService.PreRender:Connect(function()
+								if newcham then
+									newcham.Visible = _G.PlayerESP
+									newcham.Color3 = _G.PlayerESPColor
+									newcham.Transparency = _G.PlayerESPTransparency
+									newcham.Size = v.Size
+								end
+							end)
+						end)
+					end
+				end
+			end
 		end
 	end)
 end)
@@ -3738,6 +3878,34 @@ local NoAnimsToggle = SelfSection:NewToggle("No Animations", "Toggles your anima
 	end
 end)
 
+_G.NearLock = false
+local NearLockToggle = AntiAim_Section1:NewToggle("LookAt Near Players", "Makes your character point toward the nearest player.", function(state)
+	if state then
+		_G.NearLock = true
+	else
+		_G.NearLock = false
+	end
+end)
+
+task.spawn(function(nearlockk)
+	task.spawn(function(nearlockk)
+		RunService.PreRender:Connect(function()
+			if _G.NearLock == true then
+				local char = Self.Character
+				if (char and char ~= nil) then
+					local nearplayer = findNearestLimb(Self, "Torso", 25)
+					if nearplayer then
+						local hrp = char:FindFirstChild("HumanoidRootPart")
+						if hrp then
+							hrp.CFrame = CFrame.lookAt(hrp.CFrame.Position, Vector3.new(nearplayer.CFrame.Position.X, hrp.Position.Y, nearplayer.CFrame.Position.Z))
+						end
+					end
+				end
+			end
+		end)
+	end)
+end)
+
 local RemoveAnimator = SelfSection:NewButton("Remove Animator", "[RISKY] Removes your animator, freezing your character's animations.", function()
 	local Character = Self.Character
 	if (Character and Character ~= nil) then
@@ -3970,6 +4138,33 @@ local InfInvSlotsToggle = MiscSection:NewToggle("Infinite Inventory Slots", "Gra
 	else
 		_G.InfInvSlotsToggled = false
 	end
+end)
+
+_G.InfStaminaToggled = false
+local InfStaminaToggle = MiscSection:NewToggle("Infinite Stamina", "Grants you infinite stamina.", function(state)
+	if state then
+		_G.InfStaminaToggled = true
+	else
+		_G.InfStaminaToggled = false
+	end
+end)
+
+
+task.spawn(function(infstam)
+	local infstamconnection = RunService.PreRender:Connect(function()
+		if _G.InfStaminaToggled == true then
+			local r = game:GetService("ReplicatedStorage")
+			if r then
+				local ev2 = r:FindFirstChild("Events2")
+				if ev2 then
+					local staminachange = ev2:FindFirstChild("StaminaChange")
+					if staminachange then
+						staminachange:Fire(100, 100)
+					end
+				end
+			end
+		end
+	end)
 end)
 
 task.spawn(function(InfPepper)

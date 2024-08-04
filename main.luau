@@ -3029,7 +3029,7 @@ rs.PreRender:Connect(function()
 	print(target, enabled, toggled)
 	if target ~= nil and enabled == true then
 		local camera = workspace.CurrentCamera
-		camera.CFrame = CFrame.lookAt(camera.CFrame.Position, (target.Position+(target.AssemblyLinearVelocity.Magnitude/23.5)))
+		camera.CFrame = CFrame.lookAt(camera.CFrame.Position, (target.Position+(target.CFrame.LookVector*(target.AssemblyLinearVelocity.Magnitude/23.5))))
 	end
 end)
 

@@ -3028,7 +3028,9 @@ end)
 rs.PreRender:Connect(function()
 	if target ~= nil and enabled == true then
 		local camera = workspace.CurrentCamera
-		camera.CFrame = CFrame.lookAt(camera.CFrame.Position, (target.Position+(target.AssemblyLinearVelocity/23.5)))
+		local translated = target.Position + (target:GetAttribute("Prediction") / 23.5)
+		print(translated)
+		camera.CFrame = CFrame.lookAt(camera.CFrame.Position, translated)
 	end
 end)
 
@@ -3062,6 +3064,7 @@ end
 				local part = v:WaitForChild(aimpart, 5)
 				if part then
 					ball.CFrame = part.CFrame
+					ball:SetAttribute("Prediction", part.Velocity)
 					ball.Size = Vector3.new(fovsize,fovsize,fovsize)
 				else
 					connection:Disconnect()

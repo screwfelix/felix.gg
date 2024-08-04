@@ -2988,6 +2988,7 @@ local self = players.LocalPlayer
 local ballname = "camlock_ball"
 local aimpart = "Head"
 local fovsize = 15
+local pred = 23.5
 Combat_Section3:NewToggle("Camlock Enabled", "Toggles camlock on/off. Press X to aim.", function(state)
 	if state then
 		enabled = true
@@ -2995,11 +2996,15 @@ Combat_Section3:NewToggle("Camlock Enabled", "Toggles camlock on/off. Press X to
 		enabled = false
 	end
 end)
-Combat_Section3:NewDropdown("Camlock Aimpart", "Defines the target of the camlock.", {"Head", "Torso", "Right Arm", "Left Arm", "Right Leg", "Left Leg", "HumanoidRootPart"}, function(currentOption)
+Combat_Section3:NewDropdown("Aimpart", "Defines the target of the camlock.", {"Head", "Torso", "Right Arm", "Left Arm", "Right Leg", "Left Leg", "HumanoidRootPart"}, function(currentOption)
 	aimpart = currentOption
 end)
-Combat_Section3:NewSlider("Camlock FOV", "Defines the size of the FOV.", 30, 0, function(s) -- 500 (MaxValue) | 0 (MinValue)
+Combat_Section3:NewSlider("FOV", "Defines the size of the FOV.", 30, 0, function(s) -- 500 (MaxValue) | 0 (MinValue)
 	fovsize = s
+end)
+
+Combat_Section3:NewTextBox("Prediction (Read Desc)", "THE MORE, THE LESS. Recommended: 23.5", function(s)
+	pred = tonumber(s)
 end)
 
 
@@ -3028,7 +3033,7 @@ end)
 rs.PreRender:Connect(function()
 	if target ~= nil and enabled == true then
 		local camera = workspace.CurrentCamera
-		local translated = target.Position + (target:GetAttribute("Prediction") / 23.5)
+		local translated = target.Position + (target:GetAttribute("Prediction") / pred)
 		print(translated)
 		camera.CFrame = CFrame.lookAt(camera.CFrame.Position, translated)
 	end

@@ -2666,13 +2666,6 @@ end)
 
 -- // Library
 local Library = Kavo
-local LibraryThemes = {
-	SchemeColor = Color3.fromRGB(100,0,0),
-	Background = Color3.fromRGB(10,10,10),
-	Header = Color3.fromRGB(15,15,15),
-	TextColor = Color3.fromRGB(255,255,255),
-	ElementColor = Color3.fromRGB(20, 20, 20)
-}
 local Window = Library.CreateLib("felix.gg", "Synapse")
 
 -- // Tabs
@@ -2687,6 +2680,154 @@ local WorldSection = Visuals:NewSection("World")
 local VisualsSelfSection = Visuals:NewSection("Self")
 local VisualsViewmodelSection = Visuals:NewSection("Viewmodel")
 local VisualsCameraSection = Visuals:NewSection("Camera")
+local VisualsCrosshairSection = Visuals:NewSection("Crosshair")
+local VisualsGunsSection = Visuals:NewSection("Guns")
+
+-- guns
+
+_G.muzflsc = Color3.fromRGB(0,0,0)
+local MuzzleFlashColor = VisualsGunsSection:NewColorPicker("Muzzle Light Color", "Defines the color of the muzzle flash.", Color3.fromRGB(0,0,0), function(color)
+	_G.muzflsc = color
+end)
+
+_G.muzbri = 0
+local MuzzleBrightnessSlider = VisualsGunsSection:NewSlider("Muzzle Brightness", "Adjusts how fast bright your muzzle flash will be.", 60, 0, function(Value)
+	_G.muzbri = Value
+end)
+
+_G.muzrang = 0
+local MuzzleRangeSlider = VisualsGunsSection:NewSlider("Muzzle Range", "Adjusts how far away your muzzle flash will reach.", 30, 0, function(Value)
+	_G.muzrang = Value
+end)
+
+_G.tracercolor = Color3.fromRGB(0,0,0)
+local tracercolorpicker = VisualsGunsSection:NewColorPicker("Tracers Color", "Defines the color of the bullet tracer.", Color3.fromRGB(0,0,0), function(color)
+	_G.tracercolor = color
+end)
+
+_G.tracerwidth = 0
+local tracerwidthpicker = VisualsGunsSection:NewSlider("Tracers Width", "Adjusts how thick the bullet tracers will be.", 100, 0, function(Value)
+	_G.tracerwidth = Value
+end)
+
+task.spawn(function(muzzleflash)
+	RunService.PreRender:Connect(function()
+		local c = Self.Character
+		if c then
+			local t = c:FindFirstChildOfClass("Tool")
+			if t then
+				local wh = t:FindFirstChild("WeaponHandle")
+				if wh then
+					local m = wh:FindFirstChild("Muzzle")
+					if m then
+						local pointlight = m:FindFirstChildOfClass("PointLight")
+						if pointlight then
+							--print("found pointlight\ncolor: ".. tostring(pointlight.Color).. "\nbrightness: ".. tostring(pointlight.Brightness).. "\nrange: ".. tostring(pointlight.Range))
+							pointlight.Color = _G.muzflsc
+							pointlight.Brightness = _G.muzbri
+							pointlight.Range = _G.muzrang
+						end
+					end
+				end
+			end
+		end
+		local ccccc = workspace:FindFirstChild("Camera") or workspace:FindFirstChildOfClass("Camera")
+		if ccccc then
+			local buls = ccccc:FindFirstChild("Bullets")
+			if buls then
+				for i,v in pairs(buls:GetDescendants()) do
+					if v:IsA("Trail") then
+						v.Color = ColorSequence.new(_G.tracercolor)
+						v.WidthScale = NumberSequence.new(_G.tracerwidth)
+					end
+				end
+			end
+		end
+	end)
+end)
+
+
+-- crosshair
+
+local CrosshairFillColor = VisualsCrosshairSection:NewColorPicker("Crosshair Color", "Defines the color of the crosshair.", Color3.fromRGB(0,0,0), function(color)
+	local pg = Self.PlayerGui
+	if pg then
+		local mg = pg:FindFirstChild("MouseGUI")
+		if mg then
+			for i, v in pairs(mg:GetDescendants()) do
+				if v:IsA("Frame") then
+					v.BackgroundColor3 = color
+					v.BorderColor3 = color
+				end
+			end
+		end
+	end
+end)
+
+_G.rotateCross = false
+local rotateCrossToggle = VisualsCrosshairSection:NewToggle("Rotate Center", "Toggles the center of the crosshair's rotation on/off.", function(state)
+	if state then
+		_G.rotateCross = true
+	else
+		_G.rotateCross = false
+	end
+end)
+
+_G.rotateCrossSpeed = 0
+local rotateCrossSpeedSlider = VisualsCrosshairSection:NewSlider("Rotate Center Speed", "Adjusts how fast your center will rotate.", 360, 0, function(Value)
+	_G.rotateCrossSpeed = Value
+end)
+
+_G.crossSize = 4
+local crossSizeSlider = VisualsCrosshairSection:NewSlider("Center Size", "Adjusts how fast your center will rotate.", 10, 0, function(Value)
+	_G.crossSize = Value
+end)
+
+RunService.PreRender:Connect(function()
+	local pg = Self.PlayerGui
+	if pg then
+		local mg = pg:FindFirstChild("MouseGUI")
+		if mg then
+			for i, v in pairs(mg:GetDescendants()) do
+				if v:IsA("Frame") and v.Name == "Center" then
+					if _G.rotateCross then
+					v.Rotation += _G.rotateCrossSpeed
+					end
+					v.Size = UDim2.new(0, _G.crossSize, 0, _G.crossSize)
+				end
+			end
+		end
+	end
+end)
+
+_G.disableCenterCross = false
+local CrosshairCenterDisable = VisualsCrosshairSection:NewToggle("Disable Center", "Toggles the center of the crosshair on/off.", function(state)
+	if state then
+		_G.disableCenterCross = true
+	else
+		_G.disableCenterCross = false
+	end
+end)
+
+
+task.spawn(function()
+	RunService.PreRender:Connect(function()
+		if _G.disableCenterCross == true then
+			
+				local pg = Self.PlayerGui
+				if pg then
+					local mg = pg:FindFirstChild("MouseGUI")
+					if mg then
+						for i, v in pairs(mg:GetDescendants()) do
+							if v:IsA("Frame") and v.Name == "Center" then
+								v.Visible = false
+							end
+						end
+					end
+				end
+		end
+	end)
+end)
 
 local Misc = Window:NewTab("Misc")
 local MiscSection = Misc:NewSection("Misc")
@@ -2700,17 +2841,8 @@ local AntiAim_Section1 = AntiAim:NewSection("Self")
 local Rage = Window:NewTab("Rage")
 local SelfSection = Rage:NewSection("Self")
 
-
-local Map = Window:NewTab("Map")
-local MapSection = Map:NewSection("Map")
-
 local Settings = Window:NewTab("Settings")
 local Settings_UI = Settings:NewSection("UI")
-for theme, color in pairs(LibraryThemes) do
-	Settings_UI:NewColorPicker(theme, "Change your "..theme, color, function(color3)
-		Library:ChangeColor(theme, color3)
-	end)
-end
 Settings_UI:NewKeybind("Toggle UI", "Defines a keybind for toggling the UI's visibility.", Enum.KeyCode.Insert, function()
 	Library:ToggleUI()
 end)
@@ -2843,120 +2975,109 @@ local MeleeAuraHitpartDropdown = Combat_Section1:NewDropdown("Melee Aura Hitpart
 	_G.MeleeAuraHitpart = currentOption
 end)
 
--- // Camera Lock
-local Players = game:GetService("Players")
-local Player = Players.LocalPlayer
-local Mouse = Player:GetMouse()
-local RunService = game:GetService("RunService")
-local workspace = game:GetService("Workspace")
-local Camera = workspace.CurrentCamera
+-- camlock
 
-local BallName = "__camLockHelper100000ballaimbot"
-
-local CameraLock = true
-local CameraLockToggle = Combat_Section3:NewToggle("Camlock Enabled", "Toggles the camlock on/off.", function(state)
+local keybind = Enum.KeyCode.X
+local enabled = false
+local toggled = false
+local target = nil
+local uis = game:GetService("UserInputService")
+local rs = game:GetService("RunService")
+local players = game:GetService("Players")
+local self = players.LocalPlayer
+local ballname = "camlock_ball"
+local aimpart = "Head"
+local fovsize = 15
+Combat_Section3:NewToggle("Camlock Enabled", "Toggles camlock on/off. Press X to aim.", function(state)
 	if state then
-		CameraLock = true
+		enabled = true
 	else
-		CameraLock = false
+		enabled = false
 	end
 end)
-local CameraLockAimpart = "Head"
-local CameraLockAimpartDropdown = Combat_Section3:NewDropdown("Camlock Hitpart", "Defines which limb you want the camlock to aim at.", {"Head", "Torso", "Right Arm", "Left Arm", "Right Leg", "Left Leg", "HumanoidRootPart"}, function(currentOption)
-	CameraLockAimpart = currentOption
+Combat_Section3:NewDropdown("Camlock Aimpart", "Defines the target of the camlock.", {"Head", "Torso", "Right Arm", "Left Arm", "Right Leg", "Left Leg", "HumanoidRootPart"}, function(currentOption)
+	aimpart = currentOption
 end)
-local CameraLocking = false
-
-local Button2Down = Mouse.Button2Down:Connect(function()
-	CameraLocking = true
-end)
-local Button2Up = Mouse.Button2Up:Connect(function()
-	CameraLocking = false
+Combat_Section3:NewSlider("Camlock FOV", "Defines the size of the FOV.", 30, 0, function(s) -- 500 (MaxValue) | 0 (MinValue)
+	fovsize = s
 end)
 
-local function Analyse(thepart)
-	print(thepart)
-	if thepart:IsA("Model") and not (thepart.Name == Player.Name) then
-		print("is not me, but its someone else ")
-		local Root = thepart:WaitForChild("HumanoidRootPart")
-		if Root then
-			print("he has a root (".. Root.Name.. ")")
-			local Ball = Instance.new("Part", Root)
-			Ball.Name = BallName
-			Ball.Anchored = true
-			Ball.Transparency =  1
-			Ball.CastShadow = false
-			Ball.Color = Color3.new(1,0,0)
-			Ball.Size = Vector3.new(10,10,10)
-			Ball.Shape = Enum.PartType.Ball
-			Ball.Anchored = true
-			Ball.CanCollide = false
-			Ball.CanTouch = false
-			local Connection
-			task.spawn(function(Position)
-				Connection = RunService.PreRender:Connect(function()
-					if Root then
-						Ball.CFrame = Root.CFrame
-					else
-						Ball:Remove()
-						Connection:Disconnect()
-					end
-				end)
-			end)
-			local Humanoid = thepart:WaitForChild("Humanoid")
-			if Humanoid then
-				Humanoid.Died:Connect(function()
-					Ball:Remove()
-				end)
+
+uis.InputBegan:Connect(function(key)
+	print(key)
+	local mouse = self:GetMouse()
+	if key.KeyCode == keybind then
+		print("is key")
+		toggled = not toggled
+		if (toggled == true) then
+			print("is toggled")
+			if mouse.Target.Name == ballname then
+				print("is ball")
+				target = mouse.Target
+			else
+				print("isnt ball")
+				target = nil
 			end
+		else
+			print("isnt toggled")
+			target = nil
 		end
 	end
-end
+end)
 
-for Index, Object in pairs(workspace:WaitForChild("Characters"):GetChildren()) do Analyse(Object) end
-local ChildAdded = workspace:WaitForChild("Characters").ChildAdded:Connect(Analyse)
+rs.PreRender:Connect(function()
+	print(target, enabled, toggled)
+	if target ~= nil and enabled == true then
+		local camera = workspace.CurrentCamera
+		camera.CFrame = CFrame.lookAt(camera.CFrame.Position, (target.Position+(target.AssemblyLinearVelocity.Magnitude/23.5)))
+	end
+end)
 
-task.spawn(function(CameraLockTask)
-	local CameraLockConnection = RunService.PreRender:Connect(function()
-		if (CameraLocking == true and CameraLock == true) then
-			local Target = Mouse.Target
-			if (Target and Target ~= nil) then
-				if (Target.Name == BallName) then
-					local NPC = Target.Parent.Parent
-					if (NPC and NPC ~= nil) then
-						local _part = NPC:FindFirstChild(CameraLockAimpart, true)
-						if (_part and _part ~= nil) then
-							Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, (_part.Position + ((_part.CFrame.LookVector) * (_part.AssemblyLinearVelocity.Magnitude / 23.5))))
-						end
-					end
+local function a(v)
+	if v:IsA("Model") and not (v.Name == self.Name) then
+		local ball = Instance.new("Part", v)
+		ball.Name = ballname
+		ball.Transparency = 0.9
+		ball.CanCollide = false
+		ball.CanTouch = false
+		ball.Anchored = true
+		ball.Shape = Enum.PartType.Ball
+		ball.CastShadow = false
+		ball.Material = Enum.Material.SmoothPlastic
+		ball.Color = Color3.new(0,0,1)
+
+local humanoid = v:WaitForChild("Humanoid", 5)
+if humanoid then
+	humanoid.Died:Connect(function()
+				if toggled == true and target == ball then
+toggled = false
+target = nil
 				end
-			end
-		end
+		ball:Remove()
 	end)
-end)
+end
 
-local function camlock_getlimb(Point, MaxDistance, Partname, Player)
-	for i, v in pairs(Workspace:GetPartBoundsInBox(Point, Vector3.new(MaxDistance, MaxDistance, MaxDistance))) do
-		if (v and v~=nil) then
-			if (v.Parent and v.Parent~=nil) then
-				local nearhum = v.Parent:FindFirstChildOfClass("Humanoid")
-				if (nearhum and nearhum ~= nil) then
-					if (nearhum.Health > 0) then
-						if (v.name == Partname) then
-							if not (v.Parent.Name == Player.Name) then
-								if (v.Parent.Parent == Workspace:WaitForChild("Characters")) then
-									return v
-								end
-							end
-						end
-					end
+		local connection
+		connection = rs.PreRender:Connect(function()
+			if ball then
+				local part = v:WaitForChild(aimpart, 5)
+				if part then
+					ball.CFrame = part.CFrame
+					ball.Size = Vector3.new(fovsize,fovsize,fovsize)
+				else
+					connection:Disconnect()
 				end
+			else
+				connection:Disconnect()
 			end
-		end
+		end)
 	end
 end
 
-
+workspace:WaitForChild("Characters").ChildAdded:Connect(a)
+for i,v in pairs(workspace:WaitForChild("Characters"):GetChildren()) do
+	a(v)
+end
 
 
 _G.ProjectileControlToggled = false
@@ -3183,6 +3304,147 @@ task.spawn(function(Jump)
 	end)
 end)
 
+-- invisibility
+-- // Services
+local RunService: RunService = game:GetService("RunService")
+
+-- // Animation Settings
+local AnimationID: string = "rbxassetid://282574440"
+
+-- // Undefined Variables
+local AnimationTrack: AnimationTrack
+local RightLeg: BasePart
+local LeftLeg: BasePart
+local Animator: Animator
+
+-- // Booleans
+local Noclip: boolean = false
+
+-- // Functions
+local function Invisible()
+	local Character: Model = Self.Character
+	RightLeg = Character:WaitForChild("Right Leg")
+	LeftLeg = Character:WaitForChild("Left Leg")
+	local Humanoid: Humanoid = Character:WaitForChild("Humanoid")
+	Animator = Humanoid:FindFirstChildOfClass("Animator")
+	if not (Animator) then
+		Animator = Instance.new("Animator", Humanoid)
+	end	
+	local Torso: BasePart = Character:WaitForChild("Torso")
+	local RightHip: Motor6D = Torso:WaitForChild("Right Hip")
+	local LeftHip: Motor6D = Torso:WaitForChild("Left Hip")
+
+	RightLeg.Parent = nil
+	LeftLeg.Parent = nil
+	RightHip.Enabled = false
+	LeftHip.Enabled = false
+
+	local Animation: Animation = Instance.new("Animation")
+	Animation.AnimationId = AnimationID
+	AnimationTrack = Animator:LoadAnimation(Animation)
+	AnimationTrack:Play()
+	Noclip = true
+	task.delay(0.5, function()
+		Animator.Parent = nil
+	end)
+end
+
+local function Visible()
+	if (AnimationTrack ~= nil) then
+		AnimationTrack:Stop()
+		local Character: Model = Self.Character
+		local Torso: BasePart = Character:WaitForChild("Torso")
+		local RightHip: Motor6D = Torso:WaitForChild("Right Hip")
+		local LeftHip: Motor6D = Torso:WaitForChild("Left Hip")
+		local Humanoid: Humanoid = Character:WaitForChild("Humanoid")
+		if Animator ~= nil then
+			Animator.Parent = Humanoid
+		end
+
+		if (RightLeg and LeftLeg) then
+			RightLeg.Parent = Character
+			LeftLeg.Parent = Character
+		end
+		RightHip.Enabled = true
+		LeftHip.Enabled = true
+	end
+	Noclip = false
+end
+
+local function InvisibilityAnalyse(Object)
+	local Connection: RBXScriptConnection
+	Connection = RunService.Stepped:Connect(function()
+		if (Object:IsA("BasePart") and not (string.find(Object.Name, "Leg") or string.find(Object.Name, "Arm"))) then
+			if (Noclip == true) then
+				Object.CanCollide = false
+			else
+				Object.CanCollide = true
+			end
+		else
+			Connection:Disconnect()
+		end
+	end)
+end
+
+local InvisibilityToggle = AntiAim_Section1:NewToggle("Invisible", "Toggles invisibility On/Off.", function(state)
+	if state then
+		Invisible()
+	else
+		Visible()
+	end
+end)
+local CharacterAdded = Self.CharacterAdded:Connect(function(Character)
+	for _, Object in pairs(Character:GetDescendants()) do
+		InvisibilityAnalyse(Object)
+	end
+	local DescendantAdded: RBXScriptConnection = Character.DescendantAdded:Connect(InvisibilityAnalyse)
+end)
+
+_G.NoclipToggled = false
+local NoclipToggle = MovementSelf:NewToggle("Noclip", "Toggles Noclip On/Off.", function(state)
+	if state then
+		_G.NoclipToggled = true
+		Noclip = true
+	else
+		_G.NoclipToggled = false
+		Noclip = false
+	end
+end)
+
+
+_G.FlyToggled = false
+local FlyToggle = MovementSelf:NewToggle("Fly", "Toggles Fly On/Off.", function(state)
+	if state then
+		_G.FlyToggled = true
+	else
+		_G.FlyToggled = false
+	end
+end)
+
+local CharacterAdded2 = Self.CharacterAdded:Connect(function(Character)
+	local Root: BasePart = Character:WaitForChild("HumanoidRootPart", 5)
+	if Root then
+		local BG: BodyGyro = Instance.new("BodyGyro", Root)
+		local BGConnection
+		BGConnection = RunService.PreRender:Connect(function()
+			if BG then
+				if _G.FlyToggled == true then
+					BG.CFrame = camera.CoordinateFrame
+					BG.P = 9e4
+					BG.MaxTorque = Vector3.new(1e9, 1e9, 1e9)
+					Root.CFrame += (Root.CFrame.LookVector)*(forward)
+					Root.AssemblyLinearVelocity = Vector3.zero
+				else
+					BG.P = 0
+					BG.MaxTorque = Vector3.zero
+				end
+			else
+				BGConnection:Disconnect()
+			end
+		end)
+	end
+end)
+
 -- // Visuals
 
 local function lock(o: Instance, p, g)
@@ -3397,7 +3659,7 @@ task.spawn(function()
 			if not (plr:HasTag("chams")) and not (plr.Name == Self.Name) then
 				plr:AddTag("chams")
 				for i,v in pairs(plr:GetDescendants()) do
-					if v:IsA("BasePart") then
+					if v:IsA("BasePart") and not (v.Name == ballname) then
 						local newcham = Instance.new("BoxHandleAdornment", v)
 						newcham.Adornee = v
 						newcham.Visible = false
@@ -3687,6 +3949,7 @@ local SafeRegisterESPColorPicker = WorldSection:NewColorPicker("Safe/Register Ch
 	_G.SafeRegisterESPColor = color
 end)
 
+
 local SafeRegister = {}
 
 for i,v in pairs(Workspace:WaitForChild("Map"):WaitForChild("BredMakurz"):GetChildren()) do
@@ -3707,6 +3970,11 @@ task.spawn(function()
 		for i,v in pairs(SafeRegister) do
 			if not (v:HasTag("chams")) then
 				v:AddTag("chams")
+				local Values = v:FindFirstChild("Values")
+				local Broken
+				if Values then
+					Broken = Values:FindFirstChild("Broken")
+				end
 				for _, z in pairs(v:GetDescendants()) do
 					if z:IsA("BasePart") then
 						local newcham = Instance.new("BoxHandleAdornment", z)
@@ -3717,7 +3985,13 @@ task.spawn(function()
 						task.spawn(function()
 							RunService.PreRender:Connect(function()
 								if newcham then
-									newcham.Visible = _G.SafeRegisterESP
+									if (Broken and Broken ~= nil) then
+										if Broken.Value == false then
+											newcham.Visible = _G.SafeRegisterESP
+										else
+											newcham.Visible = false
+										end
+									end
 									newcham.Color3 = _G.SafeRegisterESPColor
 									newcham.Transparency = _G.SafeRegisterESPTransparency
 									newcham.Size = z.Size
@@ -3862,6 +4136,7 @@ end)
 
 -- // Anti-Aim
 
+
 _G.SpinbotToggled = false
 local SpinbotToggle = AntiAim_Section1:NewToggle("Spinbot", "Toggles Spinbot On/Off.", function(state)
 	if state then
@@ -3936,7 +4211,7 @@ local RemoveAnimator = SelfSection:NewButton("Remove Animator", "[RISKY] Removes
 		if (Humanoid and Humanoid ~= nil) then
 			local Animator = Humanoid:FindFirstChildOfClass("Animator")
 			if (Animator and Animator ~= nil) then
-				task.defer(Animator.Remove, Animator)
+				task.defer(Animator.Destroy, Animator)
 			end
 		end
 	end
@@ -4331,181 +4606,6 @@ task.spawn(function(InfInvSlots)
 						DownedStat.Value = math.huge
 					end
 				end
-			end
-		end
-	end)
-end)
-
--- // Map
-
-_G.NoDebrisToggled = false
-local NoDebrisToggle = MapSection:NewToggle("No Debris", "Visually removes all type of debris.", function(state)
-	if state then
-		_G.NoDebrisToggled = true
-	else
-		_G.NoDebrisToggled = false
-	end
-end)
-
-local RemoveWater = MapSection:NewButton("Remove Water", "Removes water from the map.", function()
-	task.defer(Terrain.Clear, Terrain)
-	local Filter = Workspace:FindFirstChild("Filter")
-	if (Filter and Filter ~= nil) then
-		local WaterCurrents = Filter:FindFirstChild("WaterCurrents")
-		if (WaterCurrents and WaterCurrents ~= nil) then
-			task.defer(WaterCurrents.Remove, WaterCurrents)
-		end
-	end
-end)
-
-local RemoveCombatZones = MapSection:NewButton("Remove Combat Zones", "Removes combat zones from the map.", function()
-	local Filter = Workspace:FindFirstChild("Filter")
-	if (Filter and Filter ~= nil) then
-		local CombatZones = Filter:FindFirstChild("CombatZones")
-		if (CombatZones and CombatZones ~= nil) then
-			task.defer(CombatZones.Remove, CombatZones)
-		end
-	end
-end)
-
-local RemoveInvisibleParts = MapSection:NewButton("Remove Invisible Parts", "Removes invisible parts from the map.", function()
-	local Filter = Workspace:FindFirstChild("Filter")
-	if (Filter and Filter ~= nil) then
-		local Parts = Filter:FindFirstChild("Parts")
-		if (Parts and Parts ~= nil) then
-			local Invis = Parts:FindFirstChild("Invis")
-			if (Invis and Invis ~= nil) then
-				task.defer(Invis.Remove, Invis)
-			end
-		end
-	end
-end)
-
-local RemoveMapping = MapSection:NewButton("Remove Mapping", "Allows you to reach restricted places.", function()
-	local Filter = Workspace:FindFirstChild("Filter")
-	if (Filter and Filter ~= nil) then
-		local Parts = Filter:FindFirstChild("Parts")
-		if (Parts and Parts ~= nil) then
-			local Mapping = Parts:FindFirstChild("Mapping")
-			if (Mapping and Mapping ~= nil) then
-				task.defer(Mapping.Remove, Mapping)
-			end
-		end
-	end
-end)
-
-local RemoveLights = MapSection:NewButton("Remove Lights", "Remove useless lights, if you have fullbright on.", function()
-	local Filter = Workspace:FindFirstChild("Filter")
-	if (Filter and Filter ~= nil) then
-		local Parts = Filter:FindFirstChild("Parts")
-		if (Parts and Parts ~= nil) then
-			local Lights = Parts:FindFirstChild("Lights")
-			if (Lights and Lights ~= nil) then
-				task.defer(Lights.Remove, Lights)
-			end
-		end
-	end
-end)
-
-local RemoveMeshes = MapSection:NewButton("Remove Meshes", "Remove useless meshes.", function()
-	local Filter = Workspace:FindFirstChild("Filter")
-	if (Filter and Filter ~= nil) then
-		local Parts = Filter:FindFirstChild("Parts")
-		if (Parts and Parts ~= nil) then
-			local Meshes = Parts:FindFirstChild("Meshes")
-			if (Meshes and Meshes ~= nil) then
-				task.defer(Meshes.Remove, Meshes)
-			end
-		end
-	end
-end)
-
-local RemoveJunk = MapSection:NewButton("Remove Junk", "Remove useless parts.", function()
-	local Filter = Workspace:FindFirstChild("Filter")
-	if (Filter and Filter ~= nil) then
-		local Parts = Filter:FindFirstChild("Parts")
-		if (Parts and Parts ~= nil) then
-			local Parts2 = Parts:FindFirstChild("Parts")
-			if (Parts2 and Parts2 ~= nil) then
-				task.defer(Parts2.Remove, Parts2)
-			end
-		end
-	end
-end)
-
-local RemoveSecurity = MapSection:NewButton("Remove Security", "Removes alarms & cameras.", function()
-	local MapFolder = Workspace:FindFirstChild("Map")
-	if (MapFolder and MapFolder ~= nil) then
-		local Security = MapFolder:FindFirstChild("Security")
-		if (Security and Security ~= nil) then
-			task.defer(Security.Remove, Security)
-		end
-	end
-end)
-
-local RemoveStreetLights = MapSection:NewButton("Remove Street Lights", "Removes street lights.", function()
-	local MapFolder = Workspace:FindFirstChild("Map")
-	if (MapFolder and MapFolder ~= nil) then
-		local StreetLights = MapFolder:FindFirstChild("StreetLights")
-		if (StreetLights and StreetLights ~= nil) then
-			task.defer(StreetLights.Remove, StreetLights)
-		end
-	end
-end)
-
-local RemoveDoors = MapSection:NewButton("Remove Doors", "Removes doors.", function()
-	local MapFolder = Workspace:FindFirstChild("Map")
-	if (MapFolder and MapFolder ~= nil) then
-		local Doors = MapFolder:FindFirstChild("Doors")
-		if (Doors and Doors ~= nil) then
-			task.defer(Doors.Remove, Doors)
-		end
-	end
-end)
-
-
-local RemoveProps = MapSection:NewButton("Remove Props", "Removes props.", function()
-	local MapFolder = Workspace:FindFirstChild("Map")
-	if (MapFolder and MapFolder ~= nil) then
-		local MParts = MapFolder:FindFirstChild("MParts")
-		if (MParts and MParts ~= nil) then
-			local MParts2 = MParts:FindFirstChild("M_Parts")
-			if (MParts2 and MParts2 ~= nil) then
-				local Props = MParts2:FindFirstChild("Props")
-				if (Props and Props ~= nil) then
-					task.defer(Props.Remove, Props)
-				end
-			end
-		end
-	end
-end)
-
-
-
-
-
-task.spawn(function(NoDebris)
-	local NoDebrisConnection = RunService.PreRender:Connect(function()
-		if _G.NoDebrisToggled == true then
-			local Debris = Workspace:FindFirstChild("Debris")
-			if (Debris and Debris ~= nil) then
-				local VParts = Debris:FindFirstChild("VParts")
-				local NParts = Debris:FindFirstChild("NParts")
-				local BloodInstances = Debris:FindFirstChild("BloodInstances")
-				local ToClear = Debris:FindFirstChild("ToClear")
-				if (NParts and NParts ~= nil) then
-					task.defer(NParts.Remove, NParts)
-				end
-				if (VParts and VParts ~= nil) then
-					task.defer(VParts.Remove, VParts)
-				end
-				if (BloodInstances and BloodInstances ~= nil) then
-					task.defer(BloodInstances.Remove, BloodInstances)
-				end
-				if (ToClear and ToClear ~= nil) then
-					task.defer(ToClear.Remove, ToClear)
-				end
-
 			end
 		end
 	end)

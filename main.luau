@@ -2680,11 +2680,13 @@ local Window = Library.CreateLib("felix.gg", "Synapse")
 local Combat = Window:NewTab("Combat")
 local Combat_Section1 = Combat:NewSection("Melees")
 local Combat_Section2 = Combat:NewSection("Projectiles")
+local Combat_Section3 = Combat:NewSection("Aim")
 
 local Visuals = Window:NewTab("Visuals")
 local WorldSection = Visuals:NewSection("World")
 local VisualsSelfSection = Visuals:NewSection("Self")
 local VisualsViewmodelSection = Visuals:NewSection("Viewmodel")
+local VisualsCameraSection = Visuals:NewSection("Camera")
 
 local Misc = Window:NewTab("Misc")
 local MiscSection = Misc:NewSection("Misc")
@@ -2758,6 +2760,28 @@ local function findNearestLimb(player, partname, maxdistance)
 		end
 	end
 end
+
+local function findNearestLimb2(point:CFrame, localplayer, maxdistance, partname)
+	local nearestPart
+	for i, part in pairs(Workspace:GetPartBoundsInBox(point, Vector3.new(maxdistance,maxdistance,maxdistance))) do
+		if part.Name == partname then
+			if not (part.Parent.Name == localplayer.Name) then
+				if part.Parent then
+					local h = part.Parent:FindFirstChildOfClass("Humanoid")
+					if h then
+						if h.Health > 0 then
+							if part.Parent.Parent == Workspace:WaitForChild("Characters") then
+								nearestPart = part
+								return nearestPart
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+end
+
 local meleedmgpoints = {}
 local meleeAuraButton = Combat_Section1:NewButton("Melee Aura (Read Desc)", "Click whenever you're equipping a melee.", function()
 	local c = Self.Character
@@ -2819,54 +2843,121 @@ local MeleeAuraHitpartDropdown = Combat_Section1:NewDropdown("Melee Aura Hitpart
 	_G.MeleeAuraHitpart = currentOption
 end)
 
---[[local function findNearestLimb(player, partname)
-	local charactersFolder = workspace:WaitForChild("Characters")
-	if not charactersFolder then
-		return nil
-	end
+-- // Camera Lock
+local Players = game:GetService("Players")
+local Player = Players.LocalPlayer
+local Mouse = Player:GetMouse()
+local RunService = game:GetService("RunService")
+local workspace = game:GetService("Workspace")
+local Camera = workspace.CurrentCamera
 
-	local character = charactersFolder:FindFirstChild(player.Name)
-	if not character then
-		return nil
-	end
+local BallName = "__camLockHelper100000ballaimbot"
 
-	local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
-	if not humanoidRootPart then
-		return nil
+local CameraLock = true
+local CameraLockToggle = Combat_Section3:NewToggle("Camlock Enabled", "Toggles the camlock on/off.", function(state)
+	if state then
+		CameraLock = true
+	else
+		CameraLock = false
 	end
+end)
+local CameraLockAimpart = "Head"
+local CameraLockAimpartDropdown = Combat_Section3:NewDropdown("Camlock Hitpart", "Defines which limb you want the camlock to aim at.", {"Head", "Torso", "Right Arm", "Left Arm", "Right Leg", "Left Leg", "HumanoidRootPart"}, function(currentOption)
+	CameraLockAimpart = currentOption
+end)
+local CameraLocking = false
 
-	local nearestHead = nil
-	local minDistance = math.huge  -- Start with a large number
-	local targetedlimb
-	if partname == "Random" then
-		local limbs = {"Head", "Torso", "Left Leg", "Right Leg", "Left Arm", "Right Arm"}
-		targetedlimb = limbs[math.random(1,#limbs)]
+local Button2Down = Mouse.Button2Down:Connect(function()
+	CameraLocking = true
+end)
+local Button2Up = Mouse.Button2Up:Connect(function()
+	CameraLocking = false
+end)
+
+local function Analyse(thepart)
+	print(thepart)
+	if thepart:IsA("Model") and not (thepart.Name == Player.Name) then
+		print("is not me, but its someone else ")
+		local Root = thepart:WaitForChild("HumanoidRootPart")
+		if Root then
+			print("he has a root (".. Root.Name.. ")")
+			local Ball = Instance.new("Part", Root)
+			Ball.Name = BallName
+			Ball.Anchored = true
+			Ball.Transparency =  1
+			Ball.CastShadow = false
+			Ball.Color = Color3.new(1,0,0)
+			Ball.Size = Vector3.new(10,10,10)
+			Ball.Shape = Enum.PartType.Ball
+			Ball.Anchored = true
+			Ball.CanCollide = false
+			Ball.CanTouch = false
+			local Connection
+			task.spawn(function(Position)
+				Connection = RunService.PreRender:Connect(function()
+					if Root then
+						Ball.CFrame = Root.CFrame
+					else
+						Ball:Remove()
+						Connection:Disconnect()
+					end
+				end)
+			end)
+			local Humanoid = thepart:WaitForChild("Humanoid")
+			if Humanoid then
+				Humanoid.Died:Connect(function()
+					Ball:Remove()
+				end)
+			end
+		end
 	end
-	
-	for _, player in pairs(workspace:WaitForChild("Characters"):GetChildren()) do
-		for i, part in pairs(player:GetChildren()) do
-			if partname == "Random" then
-				if part:IsA("BasePart") and part.Name == targetedlimb and not (part.Parent == character) then
-					local distance = (part.Position - humanoidRootPart.Position).magnitude
-					if distance < minDistance then
-						minDistance = distance
-						nearestHead = part
+end
+
+for Index, Object in pairs(workspace:WaitForChild("Characters"):GetChildren()) do Analyse(Object) end
+local ChildAdded = workspace:WaitForChild("Characters").ChildAdded:Connect(Analyse)
+
+task.spawn(function(CameraLockTask)
+	local CameraLockConnection = RunService.PreRender:Connect(function()
+		if (CameraLocking == true and CameraLock == true) then
+			local Target = Mouse.Target
+			if (Target and Target ~= nil) then
+				if (Target.Name == BallName) then
+					local NPC = Target.Parent.Parent
+					if (NPC and NPC ~= nil) then
+						local _part = NPC:FindFirstChild(CameraLockAimpart, true)
+						if (_part and _part ~= nil) then
+							Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, (_part.Position + ((_part.CFrame.LookVector) * (_part.AssemblyLinearVelocity.Magnitude / 23.5))))
+						end
 					end
 				end
-			else
-				if part:IsA("BasePart") and part.Name == partname and not (part.Parent == character) then
-					local distance = (part.Position - humanoidRootPart.Position).magnitude
-					if distance < minDistance then
-						minDistance = distance
-						nearestHead = part
+			end
+		end
+	end)
+end)
+
+local function camlock_getlimb(Point, MaxDistance, Partname, Player)
+	for i, v in pairs(Workspace:GetPartBoundsInBox(Point, Vector3.new(MaxDistance, MaxDistance, MaxDistance))) do
+		if (v and v~=nil) then
+			if (v.Parent and v.Parent~=nil) then
+				local nearhum = v.Parent:FindFirstChildOfClass("Humanoid")
+				if (nearhum and nearhum ~= nil) then
+					if (nearhum.Health > 0) then
+						if (v.name == Partname) then
+							if not (v.Parent.Name == Player.Name) then
+								if (v.Parent.Parent == Workspace:WaitForChild("Characters")) then
+									return v
+								end
+							end
+						end
 					end
 				end
 			end
 		end
 	end
+end
 
-	return nearestHead
-end]]--
+
+
 
 _G.ProjectileControlToggled = false
 local ProjectileControlToggler = Combat_Section2:NewToggle("Projectile Control", "Lets you control projectiles.", function(state)
@@ -3152,6 +3243,27 @@ _G.HighlightOutlineColor = Color3.fromRGB(0,0,0)
 local HighlightOutlineColorPicker = VisualsSelfSection:NewColorPicker("Highlight Outline Color", "Defines the color of the highlight's outline.", Color3.fromRGB(0,0,0), function(color)
 	_G.HighlightOutlineColor = color
 end)
+
+-- // fov
+
+VisualsCameraSection:NewSlider("FOV", "Sets how high your fov is.", 120, 0, function(s)
+	local r = game:GetService("ReplicatedStorage")
+	if r then
+		local charstats = r:WaitForChild("CharStats")
+		if charstats then
+			local stats = charstats:WaitForChild(Self.Name)
+			if stats then
+				local FOVs = stats:WaitForChild("FOVs")
+				if FOVs then
+					for i,v in pairs(FOVs:GetChildren()) do
+						v.Value = s
+					end
+				end
+			end
+		end
+	end
+end)
+
 
 task.spawn(function(selfHighlight)
 	local highlightConnection = RunService.PreRender:Connect(function()
@@ -4058,6 +4170,114 @@ local InfStaminaToggle = MiscSection:NewToggle("Infinite Stamina", "Grants you i
 	else
 		_G.InfStaminaToggled = false
 	end
+end)
+
+local instalocktoggled = false
+local InstaLockpick = MiscSection:NewButton("Insta Lockpick", "Never fail a lockpick.", function()
+	if instalocktoggled == false then
+		instalocktoggled = true
+		RunService.PreRender:Connect(function()
+			local pg = Self.PlayerGui
+			if pg then
+				local lpg = pg:WaitForChild("LockpickGUI")
+				if lpg then
+					local mf = lpg:WaitForChild("MF")
+					if mf then
+						local LP_Frame = mf:WaitForChild("LP_Frame")
+						if LP_Frame then
+							local Frames = LP_Frame:WaitForChild("Frames")
+							if Frames then
+								for i, v in pairs(Frames:GetDescendants()) do
+									if v.Name == "UIScale" then
+										v.Scale = 10
+									end
+								end
+							end
+						end
+					end
+				end
+			end
+		end)
+	end
+end)
+
+_G.AutoRespawn = false
+local AutoRespawnToggle = MiscSection:NewToggle("Auto Respawn", "Automatically respawns you upon death.", function(state)
+	if state then
+		_G.AutoRespawn = true
+	else
+		_G.AutoRespawn = false
+	end
+end)
+
+_G.NoBreathing = false
+local NoBreathingToggle = MiscSection:NewToggle("No Breathing", "Removes the breathing once without stamina.", function(state)
+	if state then
+		_G.NoBreathing = true
+	else
+		_G.NoBreathing = false
+	end
+end)
+task.spawn(function(nobr)
+	RunService.PreRender:Connect(function()
+		if _G.NoBreathing == true then
+			local args = {
+				[1] = false
+			}
+
+			game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("BreathingSound"):FireServer(unpack(args))
+		end
+	end)
+end)
+
+_G.AutoEat = false
+local AutoEatToggle = MiscSection:NewToggle("Auto Eat", "Automatically eats chips/sodas.", function(state)
+	if state then
+		_G.AutoEat = true
+	else
+		_G.AutoEat = false
+	end
+end)
+
+
+task.spawn(function(nobr)
+	RunService.PreRender:Connect(function()
+		if _G.AutoEat == true then
+			local c = Self.Character
+			if c then
+				local tool = c:FindFirstChildOfClass("Tool")
+				if tool then
+					if string.find(tool.Name, "Cola") or string.find(tool.Name, "Chips") then
+						local args = {
+							[1] = "Start"
+						}
+
+						tool.Event:FireServer(unpack(args))
+					end
+ 				end
+			end
+		end
+	end)
+end)
+
+task.spawn(function(aresp)
+	RunService.PreRender:Connect(function()
+		if _G.AutoRespawn == true then
+			local c = Self.Character
+			if c then
+				local h = c:FindFirstChildOfClass("Humanoid")
+				if h then
+					if not (h.Health > 0) then
+						local args = {
+							[1] = "KMG4R904"
+						}
+
+						game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("DeathRespawn"):InvokeServer(unpack(args))
+					end
+				end
+			end
+		end
+	end)
 end)
 
 

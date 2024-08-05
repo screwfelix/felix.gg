@@ -3195,13 +3195,18 @@ local function auraProjectile(projectile: Part)
 	BG.MaxTorque = Vector3.new(1e9, 1e9, 1e9)
 
 	task.spawn(function()
-		RunService.PreRender:Connect(function()
+		local connection
+		connection = RunService.PreRender:Connect(function()
 			BG.CFrame = camera.CoordinateFrame
 			BV.Velocity = ((camera.CFrame.LookVector * forward) + (camera.CFrame.RightVector * sideways)) * _G.ProjectileSpeed
-			local part = findNearestLimb(Self, _G.ProjectileAuraHitpart, 30)
+			local part = findNearestLimb(Self, _G.ProjectileAuraHitpart, 100)
 			if part then
-				projectile.CFrame = part.CFrame
+				projectile.CFrame = CFrame.lookAt(projectile.CFrame.Position, part.Position)
+				projectile.Position += projectile.CFrame.LookVector*10
 			end
+		end)
+		projectile.Destroying:Connect(function()
+			connection:Disconnect()
 		end)
 	end)
 end

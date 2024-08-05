@@ -2722,7 +2722,6 @@ task.spawn(function(muzzleflash)
 					if m then
 						local pointlight = m:FindFirstChildOfClass("PointLight")
 						if pointlight then
-							--print("found pointlight\ncolor: ".. tostring(pointlight.Color).. "\nbrightness: ".. tostring(pointlight.Brightness).. "\nrange: ".. tostring(pointlight.Range))
 							pointlight.Color = _G.muzflsc
 							pointlight.Brightness = _G.muzbri
 							pointlight.Range = _G.muzrang
@@ -2988,7 +2987,7 @@ local self = players.LocalPlayer
 local ballname = "camlock_ball"
 local aimpart = "Head"
 local fovsize = 15
-local pred = 23.5
+local pred = 19.5
 Combat_Section3:NewToggle("Camlock Enabled", "Toggles camlock on/off. Press X to aim.", function(state)
 	if state then
 		enabled = true
@@ -2999,32 +2998,19 @@ end)
 Combat_Section3:NewDropdown("Aimpart", "Defines the target of the camlock.", {"Head", "Torso", "Right Arm", "Left Arm", "Right Leg", "Left Leg", "HumanoidRootPart"}, function(currentOption)
 	aimpart = currentOption
 end)
-Combat_Section3:NewSlider("FOV", "Defines the size of the FOV.", 30, 0, function(s) -- 500 (MaxValue) | 0 (MinValue)
-	fovsize = s
-end)
-
-Combat_Section3:NewTextBox("Prediction (Read Desc)", "THE MORE, THE LESS. Recommended: 23.5", function(s)
-	pred = tonumber(s)
-end)
 
 
 uis.InputBegan:Connect(function(key)
-	print(key)
 	local mouse = self:GetMouse()
 	if key.KeyCode == keybind then
-		print("is key")
 		toggled = not toggled
 		if (toggled == true) then
-			print("is toggled")
 			if mouse.Target.Name == ballname then
-				print("is ball")
 				target = mouse.Target
 			else
-				print("isnt ball")
 				target = nil
 			end
 		else
-			print("isnt toggled")
 			target = nil
 		end
 	end
@@ -3034,7 +3020,6 @@ rs.PreRender:Connect(function()
 	if target ~= nil and enabled == true then
 		local camera = workspace.CurrentCamera
 		local translated = target.Position + (target:GetAttribute("Prediction") / pred)
-		print(translated)
 		camera.CFrame = CFrame.lookAt(camera.CFrame.Position, translated)
 	end
 end)
@@ -3043,7 +3028,7 @@ local function a(v)
 	if v:IsA("Model") and not (v.Name == self.Name) then
 		local ball = Instance.new("Part", v)
 		ball.Name = ballname
-		ball.Transparency = 0.9
+		ball.Transparency = 1
 		ball.CanCollide = false
 		ball.CanTouch = false
 		ball.Anchored = true
@@ -3170,8 +3155,6 @@ local function controlProjectile(projectile: Part)
 	local BG = Instance.new("BodyGyro", projectile)
 	BG.P = 9e4
 	BG.MaxTorque = Vector3.new(1e9, 1e9, 1e9)
-
-	print("controlling ".. projectile.Name)
 	task.spawn(function()
 		camera.CameraSubject = projectile
 		if char then
@@ -3211,7 +3194,6 @@ local function auraProjectile(projectile: Part)
 	BG.P = 9e4
 	BG.MaxTorque = Vector3.new(1e9, 1e9, 1e9)
 
-	print("controlling ".. projectile.Name)
 	task.spawn(function()
 		RunService.PreRender:Connect(function()
 			BG.CFrame = camera.CoordinateFrame

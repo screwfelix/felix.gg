@@ -2790,7 +2790,7 @@ RunService.PreRender:Connect(function()
 			for i, v in pairs(mg:GetDescendants()) do
 				if v:IsA("Frame") and v.Name == "Center" then
 					if _G.rotateCross then
-					v.Rotation += _G.rotateCrossSpeed
+						v.Rotation += _G.rotateCrossSpeed
 					end
 					v.Size = UDim2.new(0, _G.crossSize, 0, _G.crossSize)
 				end
@@ -2812,18 +2812,18 @@ end)
 task.spawn(function()
 	RunService.PreRender:Connect(function()
 		if _G.disableCenterCross == true then
-			
-				local pg = Self.PlayerGui
-				if pg then
-					local mg = pg:FindFirstChild("MouseGUI")
-					if mg then
-						for i, v in pairs(mg:GetDescendants()) do
-							if v:IsA("Frame") and v.Name == "Center" then
-								v.Visible = false
-							end
+
+			local pg = Self.PlayerGui
+			if pg then
+				local mg = pg:FindFirstChild("MouseGUI")
+				if mg then
+					for i, v in pairs(mg:GetDescendants()) do
+						if v:IsA("Frame") and v.Name == "Center" then
+							v.Visible = false
 						end
 					end
 				end
+			end
 		end
 	end)
 end)
@@ -2836,6 +2836,34 @@ local MovementSelf = Movement:NewSection("Self")
 
 local AntiAim = Window:NewTab("Anti-Aim")
 local AntiAim_Section1 = AntiAim:NewSection("Self")
+
+AntiAim_Section1:NewButton("Hide Head", "Makes your head really hard to hit.", function()
+	local char = Self.Character
+	local torso = char:FindFirstChild("Torso")
+	if torso then
+		local neckMotor = torso:FindFirstChild("Neck")
+		if neckMotor then
+			task.defer(neckMotor.Destroy, neckMotor)
+		end
+	end
+	local hrp = char:FindFirstChild("HumanoidRootPart")
+	if hrp then
+		local CTs = hrp:FindFirstChild("CTs")
+		if CTs then
+			local RGCT_Neck = CTs:FindFirstChild("RGCT_Neck")
+			if RGCT_Neck then
+				RGCT_Neck.TwistLowerAngle = 170
+				RGCT_Neck.TwistUpperAngle = 155
+			end
+		end
+	end
+	local head = char:FindFirstChild("Head")
+	head.CollisionGroup = nil
+	local collider = head:FindFirstChild("HeadCollider")
+	if collider then
+		task.defer(collider.Destroy, collider)
+	end
+end)
 
 local Rage = Window:NewTab("Rage")
 local SelfSection = Rage:NewSection("Self")
@@ -2976,100 +3004,719 @@ end)
 
 -- camlock
 
-local keybind = Enum.KeyCode.X
-local enabled = false
-local toggled = false
-local target = nil
-local uis = game:GetService("UserInputService")
-local rs = game:GetService("RunService")
-local players = game:GetService("Players")
-local self = players.LocalPlayer
-local ballname = "camlock_ball"
-local aimpart = "Head"
-local fovsize = 15
-local pred = 19.5
-Combat_Section3:NewToggle("Camlock Enabled", "Toggles camlock on/off. Press X to aim.", function(state)
-	if state then
-		enabled = true
-	else
-		enabled = false
+-- // Services
+local Players: Players = game:GetService("Players")
+local RunService: RunService = game:GetService("RunService")
+local UserInputService: UserInputService = game:GetService("UserInputService")
+
+-- // Variables
+local LocalPlayer: Player = Players.LocalPlayer
+local Camera: Camera = workspace.CurrentCamera
+local Mouse: Mouse = LocalPlayer:GetMouse()
+
+-- // Camlock Settings
+local Camlock_Enabled: boolean = false
+Combat_Section3:NewToggle("Camlock", "Toggles camlock on/off.", function(state)
+	Camlock_Enabled = state
+end)
+local Camlock_VisibleCheck: boolean = false
+Combat_Section3:NewToggle("Visible Check", "Will only focus player if he is visible.", function(state)
+	Camlock_VisibleCheck = state
+end)
+local Camlock_ForcefieldCheck: boolean = false
+Combat_Section3:NewToggle("Forcefield Check", "Will only focus player if he is not forcefielded.", function(state)
+	Camlock_ForcefieldCheck = state
+end)
+local Camlock_TeamCheck: boolean = false
+Combat_Section3:NewToggle("Team Check", "Will only focus player if he is an enemy. Meant to be used in infection mode.", function(state)
+	Camlock_TeamCheck = state
+end)
+local Camlock_DownedCheck: boolean = false
+Combat_Section3:NewToggle("Downed Check", "Ignores downed players.", function(state)
+	Camlock_DownedCheck = state
+end)
+
+local Camlock_Aimpart: string = "Head"
+Combat_Section3:NewDropdown("Aimpart", "Defines which limb the camlock will target.", {"Head", "Torso", "Left Arm", "Right Arm", "Left Leg", "Right Leg"}, function(t)
+	Camlock_Aimpart = t
+end)
+local Camlock_Prediction: number = 19.5
+
+-- // Don't modify
+local HoldingButton2: boolean = false
+
+-- // Functions
+local function getNearestPart()
+	local nearestPart = nil
+	local shortestDistance = math.huge  -- Start with a very large number
+
+	-- Get the mouse's 3D world position
+	local mousePos = Mouse.Hit
+
+	-- Iterate over all parts in the workspace
+	for _, object in ipairs(workspace:WaitForChild("Characters"):GetChildren()) do
+		if object:IsA("Model") and not (object.Name == LocalPlayer.Name) then
+			local hum = object:FindFirstChildOfClass("Humanoid")
+			local torso = object:FindFirstChild("Torso")
+			if hum and hum.Health > 0 then
+				local targetPart = object:FindFirstChild(Camlock_Aimpart)
+				if (targetPart and targetPart ~= nil and targetPart:IsA("BasePart")) then
+					if Camlock_DownedCheck == true then
+						if not (torso:FindFirstChildOfClass("PointLight")) then
+							local targetplr = Players:FindFirstChild(object.Name)
+							if targetplr then
+								-- plr
+								if Camlock_TeamCheck == true then
+									if targetPart.Team == LocalPlayer.Team then
+
+									else
+										if object:FindFirstChildOfClass("ForceField") then
+											if not (Camlock_ForcefieldCheck == true) then
+												local vector, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
+
+												local viewportPoint = Vector2.new(vector.X, vector.Y)
+												local depth = vector.Z
+
+												if onScreen then
+													local rayOrigin = Camera.CFrame.Position
+													local rayDestination = targetPart.Position
+
+													local rayDirection = rayDestination - rayOrigin
+
+													local character = Self.Character
+													local raycastResult
+
+													if character then
+														local raycastparams = RaycastParams.new()
+														raycastparams.FilterType = Enum.RaycastFilterType.Exclude
+														raycastparams.FilterDescendantsInstances = {character}
+														raycastResult = workspace:Raycast(rayOrigin, rayDirection, raycastparams)
+													else
+														raycastResult = workspace:Raycast(rayOrigin, rayDirection)
+													end						
+
+													if raycastResult then
+														if raycastResult.Instance == targetPart then
+															local headPosition = targetPart.Position
+															local distance = (headPosition - mousePos.Position).magnitude
+
+															if distance < shortestDistance then
+																nearestPart = targetPart
+																shortestDistance = distance
+															end
+														else
+															if Camlock_VisibleCheck == true then
+																--> ignore
+															else
+																local headPosition = targetPart.Position
+																local distance = (headPosition - mousePos.Position).magnitude
+
+																if distance < shortestDistance then
+																	nearestPart = targetPart
+																	shortestDistance = distance
+																end
+															end
+														end
+													end
+												end
+											end
+										else
+											local vector, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
+
+											local viewportPoint = Vector2.new(vector.X, vector.Y)
+											local depth = vector.Z
+
+											if onScreen then
+												local rayOrigin = Camera.CFrame.Position
+												local rayDestination = targetPart.Position
+
+												local rayDirection = rayDestination - rayOrigin
+
+												local character = Self.Character
+												local raycastResult
+
+												if character then
+													local raycastparams = RaycastParams.new()
+													raycastparams.FilterType = Enum.RaycastFilterType.Exclude
+													raycastparams.FilterDescendantsInstances = {character}
+													raycastResult = workspace:Raycast(rayOrigin, rayDirection, raycastparams)
+												else
+													raycastResult = workspace:Raycast(rayOrigin, rayDirection)
+												end						
+
+												if raycastResult then
+													if raycastResult.Instance == targetPart then
+														local headPosition = targetPart.Position
+														local distance = (headPosition - mousePos.Position).magnitude
+
+														if distance < shortestDistance then
+															nearestPart = targetPart
+															shortestDistance = distance
+														end
+													else
+														if Camlock_VisibleCheck == true then
+															--> ignore
+														else
+															local headPosition = targetPart.Position
+															local distance = (headPosition - mousePos.Position).magnitude
+
+															if distance < shortestDistance then
+																nearestPart = targetPart
+																shortestDistance = distance
+															end
+														end
+													end
+												end
+											end
+										end
+									end
+								else
+									if object:FindFirstChildOfClass("ForceField") then
+										if not (Camlock_ForcefieldCheck == true) then
+											local vector, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
+
+											local viewportPoint = Vector2.new(vector.X, vector.Y)
+											local depth = vector.Z
+
+											if onScreen then
+												local rayOrigin = Camera.CFrame.Position
+												local rayDestination = targetPart.Position
+
+												local rayDirection = rayDestination - rayOrigin
+
+												local character = Self.Character
+												local raycastResult
+
+												if character then
+													local raycastparams = RaycastParams.new()
+													raycastparams.FilterType = Enum.RaycastFilterType.Exclude
+													raycastparams.FilterDescendantsInstances = {character}
+													raycastResult = workspace:Raycast(rayOrigin, rayDirection, raycastparams)
+												else
+													raycastResult = workspace:Raycast(rayOrigin, rayDirection)
+												end						
+
+												if raycastResult then
+													if raycastResult.Instance == targetPart then
+														local headPosition = targetPart.Position
+														local distance = (headPosition - mousePos.Position).magnitude
+
+														if distance < shortestDistance then
+															nearestPart = targetPart
+															shortestDistance = distance
+														end
+													else
+														if Camlock_VisibleCheck == true then
+															--> ignore
+														else
+															local headPosition = targetPart.Position
+															local distance = (headPosition - mousePos.Position).magnitude
+
+															if distance < shortestDistance then
+																nearestPart = targetPart
+																shortestDistance = distance
+															end
+														end
+													end
+												end
+											end
+										end
+									else
+										local vector, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
+
+										local viewportPoint = Vector2.new(vector.X, vector.Y)
+										local depth = vector.Z
+
+										if onScreen then
+											local rayOrigin = Camera.CFrame.Position
+											local rayDestination = targetPart.Position
+
+											local rayDirection = rayDestination - rayOrigin
+
+											local character = Self.Character
+											local raycastResult
+
+											if character then
+												local raycastparams = RaycastParams.new()
+												raycastparams.FilterType = Enum.RaycastFilterType.Exclude
+												raycastparams.FilterDescendantsInstances = {character}
+												raycastResult = workspace:Raycast(rayOrigin, rayDirection, raycastparams)
+											else
+												raycastResult = workspace:Raycast(rayOrigin, rayDirection)
+											end						
+
+											if raycastResult then
+												if raycastResult.Instance == targetPart then
+													local headPosition = targetPart.Position
+													local distance = (headPosition - mousePos.Position).magnitude
+
+													if distance < shortestDistance then
+														nearestPart = targetPart
+														shortestDistance = distance
+													end
+												else
+													if Camlock_VisibleCheck == true then
+														--> ignore
+													else
+														local headPosition = targetPart.Position
+														local distance = (headPosition - mousePos.Position).magnitude
+
+														if distance < shortestDistance then
+															nearestPart = targetPart
+															shortestDistance = distance
+														end
+													end
+												end
+											end
+										end
+									end
+								end
+							else
+								-- npc
+								if object:FindFirstChildOfClass("ForceField") then
+									if not (Camlock_ForcefieldCheck == true) then
+										local vector, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
+
+										local viewportPoint = Vector2.new(vector.X, vector.Y)
+										local depth = vector.Z
+
+										if onScreen then
+											local rayOrigin = Camera.CFrame.Position
+											local rayDestination = targetPart.Position
+
+											local rayDirection = rayDestination - rayOrigin
+
+											local character = Self.Character
+											local raycastResult
+
+											if character then
+												local raycastparams = RaycastParams.new()
+												raycastparams.FilterType = Enum.RaycastFilterType.Exclude
+												raycastparams.FilterDescendantsInstances = {character}
+												raycastResult = workspace:Raycast(rayOrigin, rayDirection, raycastparams)
+											else
+												raycastResult = workspace:Raycast(rayOrigin, rayDirection)
+											end						
+
+											if raycastResult then
+												if raycastResult.Instance == targetPart then
+													local headPosition = targetPart.Position
+													local distance = (headPosition - mousePos.Position).magnitude
+
+													if distance < shortestDistance then
+														nearestPart = targetPart
+														shortestDistance = distance
+													end
+												else
+													if Camlock_VisibleCheck == true then
+														--> ignore
+													else
+														local headPosition = targetPart.Position
+														local distance = (headPosition - mousePos.Position).magnitude
+
+														if distance < shortestDistance then
+															nearestPart = targetPart
+															shortestDistance = distance
+														end
+													end
+												end
+											end
+										end
+									end
+								else
+									local vector, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
+
+									local viewportPoint = Vector2.new(vector.X, vector.Y)
+									local depth = vector.Z
+
+									if onScreen then
+										local rayOrigin = Camera.CFrame.Position
+										local rayDestination = targetPart.Position
+
+										local rayDirection = rayDestination - rayOrigin
+
+										local character = Self.Character
+										local raycastResult
+
+										if character then
+											local raycastparams = RaycastParams.new()
+											raycastparams.FilterType = Enum.RaycastFilterType.Exclude
+											raycastparams.FilterDescendantsInstances = {character}
+											raycastResult = workspace:Raycast(rayOrigin, rayDirection, raycastparams)
+										else
+											raycastResult = workspace:Raycast(rayOrigin, rayDirection)
+										end						
+
+										if raycastResult then
+											if raycastResult.Instance == targetPart then
+												local headPosition = targetPart.Position
+												local distance = (headPosition - mousePos.Position).magnitude
+
+												if distance < shortestDistance then
+													nearestPart = targetPart
+													shortestDistance = distance
+												end
+											else
+												if Camlock_VisibleCheck == true then
+													--> ignore
+												else
+													local headPosition = targetPart.Position
+													local distance = (headPosition - mousePos.Position).magnitude
+
+													if distance < shortestDistance then
+														nearestPart = targetPart
+														shortestDistance = distance
+													end
+												end
+											end
+										end
+									end
+								end
+							end
+						end
+					else
+						local targetplr = Players:FindFirstChild(object.Name)
+						if targetplr then
+							-- plr
+							if Camlock_TeamCheck == true then
+								if targetPart.Team == LocalPlayer.Team then
+
+								else
+									if object:FindFirstChildOfClass("ForceField") then
+										if not (Camlock_ForcefieldCheck == true) then
+											local vector, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
+
+											local viewportPoint = Vector2.new(vector.X, vector.Y)
+											local depth = vector.Z
+
+											if onScreen then
+												local rayOrigin = Camera.CFrame.Position
+												local rayDestination = targetPart.Position
+
+												local rayDirection = rayDestination - rayOrigin
+
+												local character = Self.Character
+												local raycastResult
+
+												if character then
+													local raycastparams = RaycastParams.new()
+													raycastparams.FilterType = Enum.RaycastFilterType.Exclude
+													raycastparams.FilterDescendantsInstances = {character}
+													raycastResult = workspace:Raycast(rayOrigin, rayDirection, raycastparams)
+												else
+													raycastResult = workspace:Raycast(rayOrigin, rayDirection)
+												end						
+
+												if raycastResult then
+													if raycastResult.Instance == targetPart then
+														local headPosition = targetPart.Position
+														local distance = (headPosition - mousePos.Position).magnitude
+
+														if distance < shortestDistance then
+															nearestPart = targetPart
+															shortestDistance = distance
+														end
+													else
+														if Camlock_VisibleCheck == true then
+															--> ignore
+														else
+															local headPosition = targetPart.Position
+															local distance = (headPosition - mousePos.Position).magnitude
+
+															if distance < shortestDistance then
+																nearestPart = targetPart
+																shortestDistance = distance
+															end
+														end
+													end
+												end
+											end
+										end
+									else
+										local vector, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
+
+										local viewportPoint = Vector2.new(vector.X, vector.Y)
+										local depth = vector.Z
+
+										if onScreen then
+											local rayOrigin = Camera.CFrame.Position
+											local rayDestination = targetPart.Position
+
+											local rayDirection = rayDestination - rayOrigin
+
+											local character = Self.Character
+											local raycastResult
+
+											if character then
+												local raycastparams = RaycastParams.new()
+												raycastparams.FilterType = Enum.RaycastFilterType.Exclude
+												raycastparams.FilterDescendantsInstances = {character}
+												raycastResult = workspace:Raycast(rayOrigin, rayDirection, raycastparams)
+											else
+												raycastResult = workspace:Raycast(rayOrigin, rayDirection)
+											end						
+
+											if raycastResult then
+												if raycastResult.Instance == targetPart then
+													local headPosition = targetPart.Position
+													local distance = (headPosition - mousePos.Position).magnitude
+
+													if distance < shortestDistance then
+														nearestPart = targetPart
+														shortestDistance = distance
+													end
+												else
+													if Camlock_VisibleCheck == true then
+														--> ignore
+													else
+														local headPosition = targetPart.Position
+														local distance = (headPosition - mousePos.Position).magnitude
+
+														if distance < shortestDistance then
+															nearestPart = targetPart
+															shortestDistance = distance
+														end
+													end
+												end
+											end
+										end
+									end
+								end
+							else
+								if object:FindFirstChildOfClass("ForceField") then
+									if not (Camlock_ForcefieldCheck == true) then
+										local vector, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
+
+										local viewportPoint = Vector2.new(vector.X, vector.Y)
+										local depth = vector.Z
+
+										if onScreen then
+											local rayOrigin = Camera.CFrame.Position
+											local rayDestination = targetPart.Position
+
+											local rayDirection = rayDestination - rayOrigin
+
+											local character = Self.Character
+											local raycastResult
+
+											if character then
+												local raycastparams = RaycastParams.new()
+												raycastparams.FilterType = Enum.RaycastFilterType.Exclude
+												raycastparams.FilterDescendantsInstances = {character}
+												raycastResult = workspace:Raycast(rayOrigin, rayDirection, raycastparams)
+											else
+												raycastResult = workspace:Raycast(rayOrigin, rayDirection)
+											end						
+
+											if raycastResult then
+												if raycastResult.Instance == targetPart then
+													local headPosition = targetPart.Position
+													local distance = (headPosition - mousePos.Position).magnitude
+
+													if distance < shortestDistance then
+														nearestPart = targetPart
+														shortestDistance = distance
+													end
+												else
+													if Camlock_VisibleCheck == true then
+														--> ignore
+													else
+														local headPosition = targetPart.Position
+														local distance = (headPosition - mousePos.Position).magnitude
+
+														if distance < shortestDistance then
+															nearestPart = targetPart
+															shortestDistance = distance
+														end
+													end
+												end
+											end
+										end
+									end
+								else
+									local vector, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
+
+									local viewportPoint = Vector2.new(vector.X, vector.Y)
+									local depth = vector.Z
+
+									if onScreen then
+										local rayOrigin = Camera.CFrame.Position
+										local rayDestination = targetPart.Position
+
+										local rayDirection = rayDestination - rayOrigin
+
+										local character = Self.Character
+										local raycastResult
+
+										if character then
+											local raycastparams = RaycastParams.new()
+											raycastparams.FilterType = Enum.RaycastFilterType.Exclude
+											raycastparams.FilterDescendantsInstances = {character}
+											raycastResult = workspace:Raycast(rayOrigin, rayDirection, raycastparams)
+										else
+											raycastResult = workspace:Raycast(rayOrigin, rayDirection)
+										end						
+
+										if raycastResult then
+											if raycastResult.Instance == targetPart then
+												local headPosition = targetPart.Position
+												local distance = (headPosition - mousePos.Position).magnitude
+
+												if distance < shortestDistance then
+													nearestPart = targetPart
+													shortestDistance = distance
+												end
+											else
+												if Camlock_VisibleCheck == true then
+													--> ignore
+												else
+													local headPosition = targetPart.Position
+													local distance = (headPosition - mousePos.Position).magnitude
+
+													if distance < shortestDistance then
+														nearestPart = targetPart
+														shortestDistance = distance
+													end
+												end
+											end
+										end
+									end
+								end
+							end
+						else
+							-- npc
+							if object:FindFirstChildOfClass("ForceField") then
+								if not (Camlock_ForcefieldCheck == true) then
+									local vector, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
+
+									local viewportPoint = Vector2.new(vector.X, vector.Y)
+									local depth = vector.Z
+
+									if onScreen then
+										local rayOrigin = Camera.CFrame.Position
+										local rayDestination = targetPart.Position
+
+										local rayDirection = rayDestination - rayOrigin
+
+										local character = Self.Character
+										local raycastResult
+
+										if character then
+											local raycastparams = RaycastParams.new()
+											raycastparams.FilterType = Enum.RaycastFilterType.Exclude
+											raycastparams.FilterDescendantsInstances = {character}
+											raycastResult = workspace:Raycast(rayOrigin, rayDirection, raycastparams)
+										else
+											raycastResult = workspace:Raycast(rayOrigin, rayDirection)
+										end						
+
+										if raycastResult then
+											if raycastResult.Instance == targetPart then
+												local headPosition = targetPart.Position
+												local distance = (headPosition - mousePos.Position).magnitude
+
+												if distance < shortestDistance then
+													nearestPart = targetPart
+													shortestDistance = distance
+												end
+											else
+												if Camlock_VisibleCheck == true then
+													--> ignore
+												else
+													local headPosition = targetPart.Position
+													local distance = (headPosition - mousePos.Position).magnitude
+
+													if distance < shortestDistance then
+														nearestPart = targetPart
+														shortestDistance = distance
+													end
+												end
+											end
+										end
+									end
+								end
+							else
+								local vector, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
+
+								local viewportPoint = Vector2.new(vector.X, vector.Y)
+								local depth = vector.Z
+
+								if onScreen then
+									local rayOrigin = Camera.CFrame.Position
+									local rayDestination = targetPart.Position
+
+									local rayDirection = rayDestination - rayOrigin
+
+									local character = Self.Character
+									local raycastResult
+
+									if character then
+										local raycastparams = RaycastParams.new()
+										raycastparams.FilterType = Enum.RaycastFilterType.Exclude
+										raycastparams.FilterDescendantsInstances = {character}
+										raycastResult = workspace:Raycast(rayOrigin, rayDirection, raycastparams)
+									else
+										raycastResult = workspace:Raycast(rayOrigin, rayDirection)
+									end						
+
+									if raycastResult then
+										if raycastResult.Instance == targetPart then
+											local headPosition = targetPart.Position
+											local distance = (headPosition - mousePos.Position).magnitude
+
+											if distance < shortestDistance then
+												nearestPart = targetPart
+												shortestDistance = distance
+											end
+										else
+											if Camlock_VisibleCheck == true then
+												--> ignore
+											else
+												local headPosition = targetPart.Position
+												local distance = (headPosition - mousePos.Position).magnitude
+
+												if distance < shortestDistance then
+													nearestPart = targetPart
+													shortestDistance = distance
+												end
+											end
+										end
+									end
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+
+	return nearestPart
+end
+
+--// Connections
+local InputBegan: RBXScriptConnection = UserInputService.InputBegan:Connect(function(input)
+	local UserInputType: Enum.UserInputType = input.UserInputType
+	if (UserInputType == Enum.UserInputType.MouseButton2) then
+		HoldingButton2 = true
 	end
 end)
-Combat_Section3:NewDropdown("Aimpart", "Defines the target of the camlock.", {"Head", "Torso", "Right Arm", "Left Arm", "Right Leg", "Left Leg", "HumanoidRootPart"}, function(currentOption)
-	aimpart = currentOption
+
+local InputEnded: RBXScriptConnection = UserInputService.InputEnded:Connect(function(input)
+	local UserInputType: Enum.UserInputType = input.UserInputType
+	if (UserInputType == Enum.UserInputType.MouseButton2) then
+		HoldingButton2 = false
+	end
 end)
 
-
-uis.InputBegan:Connect(function(key)
-	local mouse = self:GetMouse()
-	if key.KeyCode == keybind then
-		toggled = not toggled
-		if (toggled == true) then
-			if mouse.Target.Name == ballname then
-				target = mouse.Target
-			else
-				target = nil
-			end
-		else
-			target = nil
+local PreRender: RBXScriptConnection = RunService.PreRender:Connect(function(delta)
+	if HoldingButton2 == true and Camlock_Enabled == true then
+		local nearest = getNearestPart()
+		if nearest then
+			Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, nearest.Position + (nearest.Velocity/Camlock_Prediction))
 		end
 	end
 end)
-
-rs.PreRender:Connect(function()
-	if target ~= nil and enabled == true then
-		local camera = workspace.CurrentCamera
-		local translated = target.Position + (target:GetAttribute("Prediction") / pred)
-		camera.CFrame = CFrame.lookAt(camera.CFrame.Position, translated)
-	end
-end)
-
-local function a(v)
-	if v:IsA("Model") and not (v.Name == self.Name) then
-		local ball = Instance.new("Part", v)
-		ball.Name = ballname
-		ball.Transparency = 1
-		ball.CanCollide = false
-		ball.CanTouch = false
-		ball.Anchored = true
-		ball.Shape = Enum.PartType.Ball
-		ball.CastShadow = false
-		ball.Material = Enum.Material.SmoothPlastic
-		ball.Color = Color3.new(0,0,1)
-
-local humanoid = v:WaitForChild("Humanoid", 5)
-if humanoid then
-	humanoid.Died:Connect(function()
-				if toggled == true and target == ball then
-toggled = false
-target = nil
-				end
-		ball:Remove()
-	end)
-end
-
-		local connection
-		connection = rs.PreRender:Connect(function()
-			if ball then
-				local part = v:WaitForChild(aimpart, 5)
-				if part then
-					ball.CFrame = part.CFrame
-					ball:SetAttribute("Prediction", part.Velocity)
-					ball.Size = Vector3.new(fovsize,fovsize,fovsize)
-				else
-					connection:Disconnect()
-				end
-			else
-				connection:Disconnect()
-			end
-		end)
-	end
-end
-
-workspace:WaitForChild("Characters").ChildAdded:Connect(a)
-for i,v in pairs(workspace:WaitForChild("Characters"):GetChildren()) do
-	a(v)
-end
 
 
 _G.ProjectileControlToggled = false
@@ -3084,21 +3731,6 @@ end)
 _G.ProjectileSpeed = 0
 local ProjectileSpeedBox = Combat_Section2:NewTextBox("Projectile Control Speed", "Defines how fast you will fly with projectiles.", function(txt)
 	_G.ProjectileSpeed = tonumber(txt)
-end)
-
-_G.ProjectileAuraToggled = false
-local ProjectileAuraToggler = Combat_Section2:NewToggle("Projectile Aura", "Works just like a silent aim, re-directs projectiles to the nearest player.", function(state)
-	if state then
-		_G.ProjectileAuraToggled = true
-	else
-		_G.ProjectileAuraToggled = false
-	end
-end)
-
-
-_G.ProjectileAuraHitpart = "Head"
-local ProjectileAuraHitpartDropdown = Combat_Section2:NewDropdown("Projectile Aura Hitpart", "Defines which limb you want the aura to hit.", {"Head", "Torso", "Right Arm", "Left Arm", "Right Leg", "Left Leg", "Random"}, function(currentOption)
-	_G.ProjectileAuraHitpart = currentOption
 end)
 
 local UserInputService = game:GetService("UserInputService")
@@ -3179,54 +3811,12 @@ local function controlProjectile(projectile: Part)
 	end)
 end
 
-local function auraProjectile(projectile: Part)
-	for i,v:Instance in pairs(projectile:GetDescendants()) do
-		if v:IsA("LinearVelocity") or v:IsA("AngularVelocity") or v:IsA("BodyVelocity") or v:IsA("BodyGyro") or v:IsA("BodyForce") or v:IsA("BodyThrust") or v:IsA("BodyPosition") or v:IsA("BodyAngularVelocity") or v:IsA("BodyMover") then
-			task.defer(v.Destroy, v)
-		end
-	end
-
-	local BV = Instance.new("BodyVelocity", projectile)
-	BV.MaxForce = Vector3.new(1e9, 1e9, 1e9)
-	BV.Velocity = Vector3.new()
-
-	local BG = Instance.new("BodyGyro", projectile)
-	BG.P = 9e4
-	BG.MaxTorque = Vector3.new(1e9, 1e9, 1e9)
-
-	task.spawn(function()
-		local connection
-		connection = RunService.PreRender:Connect(function()
-			BG.CFrame = camera.CoordinateFrame
-			BV.Velocity = ((camera.CFrame.LookVector * forward) + (camera.CFrame.RightVector * sideways)) * _G.ProjectileSpeed
-			local part = findNearestLimb(Self, _G.ProjectileAuraHitpart, 100)
-			if part then
-				projectile.CFrame = CFrame.lookAt(projectile.CFrame.Position, part.Position)
-				projectile.Position += projectile.CFrame.LookVector*10
-			end
-		end)
-		projectile.Destroying:Connect(function()
-			connection:Disconnect()
-		end)
-	end)
-end
-
 
 task.spawn(function()
 	Workspace:WaitForChild("Debris").DescendantAdded:Connect(function(v)
 		if (v.Name == "Snowball" or v.Name == "RPG_Rocket" or v.Name == "FireworkLauncher_Rocket" or v.Name == "Hallowsw_Rocket2" or v.Name == "Panzer_Rocket" or v.Name == "TransIgnore" or v.Name == "GrenadeLauncherGrenade" or v.Name == "SBL_Rocket" or v.Name == "SpitBall" or v.Name == "Effect") and v:IsA("BasePart") then
 			if _G.ProjectileControlToggled == true then
 				controlProjectile(v)
-			end
-		end
-	end)
-end)
-
-task.spawn(function()
-	Workspace:WaitForChild("Debris").DescendantAdded:Connect(function(v)
-		if (v.Name == "Snowball" or v.Name == "RPG_Rocket" or v.Name == "FireworkLauncher_Rocket" or v.Name == "Hallowsw_Rocket2" or v.Name == "Panzer_Rocket" or v.Name == "TransIgnore" or v.Name == "GrenadeLauncherGrenade" or v.Name == "SBL_Rocket" or v.Name == "SpitBall" or v.Name == "Effect") and v:IsA("BasePart") then
-			if _G.ProjectileAuraToggled == true then
-				auraProjectile(v)
 			end
 		end
 	end)
@@ -3646,6 +4236,69 @@ local PlayerESPColorPicker = WorldSection:NewColorPicker("Player Chams Color", "
 	_G.PlayerESPColor = color
 end)
 
+_G.PlayerText = false
+local PlayerTextToggle = WorldSection:NewToggle("Player Text", "Draws text around players, to easily spot them.", function(state)
+	if state then
+		_G.PlayerText = true
+	else
+		_G.PlayerText = false
+	end
+end)
+
+_G.PlayerTextColor = Color3.fromRGB(255,255,255)
+local PlayerTextColorPicker = WorldSection:NewColorPicker("Player Text Color", "Defines the color of the player text.", Color3.fromRGB(255,255,255), function(color)
+	_G.PlayerTextColor = color
+end)
+
+local Self = game.Players.LocalPlayer
+local rs = game:GetService("RunService")
+local function analyse(plr)
+	if (plr:IsA("Model") and not (plr.Name == Self.Name)) then
+		local head = plr:WaitForChild("Head", 3)
+		if (head and head ~= nil) then
+			local gui = Instance.new("BillboardGui", head)
+			gui.Name = tostring(math.random(1000000,9999999))
+			gui.MaxDistance = math.huge
+			gui.AlwaysOnTop = true
+			gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+			gui.ResetOnSpawn = false
+			gui.ClipsDescendants = false
+			gui.StudsOffsetWorldSpace = Vector3.new(0, 1, 0)
+			gui.Size = UDim2.new(0,600,0,15)
+
+			local text = Instance.new("TextLabel", gui)
+			text.Size = UDim2.new(1,0,1,0)
+			text.BackgroundTransparency = 1
+			text.TextScaled = true
+			text.TextColor3 = Color3.new(1,1,1)
+			text.TextStrokeTransparency = 0
+
+			task.spawn(function()
+				local con
+				con = rs.PreRender:Connect(function()
+					if plr and head and gui and text then
+						gui.Enabled = _G.PlayerText
+						text.TextColor3 = _G.PlayerTextColor
+						local hum = plr:FindFirstChildOfClass("Humanoid")
+						if hum then
+							local tool = plr:FindFirstChildOfClass("Tool")
+							if tool then
+								text.Text = "Name: "..plr.Name.. " || Health: ".. hum.Health.. "/".. hum.MaxHealth.. " || Distance: ".. tostring(string.format("%.2f", math.floor((workspace.CurrentCamera.CFrame.Position - head.Position).Magnitude * 100) / 100)).. " || Tool: ".. tool.Name
+							else
+								text.Text = "Name: "..plr.Name.. " || Health: ".. hum.Health.. "/".. hum.MaxHealth.. " || Distance: ".. tostring(string.format("%.2f", math.floor((workspace.CurrentCamera.CFrame.Position - head.Position).Magnitude * 100) / 100)).. " || Tool: nil"
+							end
+						end
+					else
+						con:Disconnect()
+					end
+				end)
+			end)
+		end
+	end
+end
+for _, v in pairs(workspace:WaitForChild("Characters"):GetChildren()) do analyse(v) end
+local cadded = workspace:WaitForChild("Characters").ChildAdded:Connect(analyse)
+
 task.spawn(function()
 	RunService.PreRender:Connect(function()
 		local charactersfolder = Workspace:FindFirstChild("Characters")
@@ -3653,7 +4306,7 @@ task.spawn(function()
 			if not (plr:HasTag("chams")) and not (plr.Name == Self.Name) then
 				plr:AddTag("chams")
 				for i,v in pairs(plr:GetDescendants()) do
-					if v:IsA("BasePart") and not (v.Name == ballname) then
+					if v:IsA("BasePart") then
 						local newcham = Instance.new("BoxHandleAdornment", v)
 						newcham.Adornee = v
 						newcham.Visible = false
@@ -4523,7 +5176,7 @@ task.spawn(function(nobr)
 
 						tool.Event:FireServer(unpack(args))
 					end
- 				end
+				end
 			end
 		end
 	end)

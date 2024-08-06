@@ -2745,6 +2745,49 @@ task.spawn(function(muzzleflash)
 	end)
 end)
 
+_G.BulletHoleESP = false
+local BulletHoleESPToggle = VisualsGunsSection:NewToggle("Bullet Hole Chams", "Draws chams around bullet holes, to easily spot them.", function(state)
+	if state then
+		_G.BulletHoleESP = true
+	else
+		_G.BulletHoleESP = false
+	end
+end)
+
+_G.BulletHoleESPTransparency = 0
+local BulletHoleESPTransparencyBox = VisualsGunsSection:NewTextBox("Bullet Hole Chams Transparency", "Defines the transparency of the bullet hole chams.", function(txt)
+	_G.BulletHoleESPTransparency = tonumber(txt)
+end)
+_G.BulletHoleESPColor = Color3.fromRGB(0,0,0)
+local BulletHoleESPColorPicker = VisualsGunsSection:NewColorPicker("Bullet Hole Chams Color", "Defines the color of the bullet hole chams.", Color3.fromRGB(0,0,0), function(color)
+	_G.BulletHoleESPColor = color
+end)
+
+task.spawn(function(bhchams)
+	local function a(v)
+		if v:IsA("BasePart") and v.Name == "BulletHole" then
+			local newcham = Instance.new("BoxHandleAdornment", v)
+			newcham.Adornee = v
+			newcham.Visible = false
+			newcham.AlwaysOnTop = true
+			newcham.ZIndex = 1
+			task.spawn(function()
+				RunService.PreRender:Connect(function()
+					if newcham then
+						newcham.Visible = _G.BulletHoleESP
+						newcham.Color3 = _G.BulletHoleESPColor
+						newcham.Transparency = _G.BulletHoleESPTransparency
+						newcham.Size = v.Size
+					end
+				end)
+			end)
+		end
+	end
+
+	for i,v in pairs(Workspace:WaitForChild("Debris"):GetChildren()) do a(v) end 
+	local bhadded = Workspace:WaitForChild("Debris").ChildAdded:Connect(a)
+end)
+
 
 -- crosshair
 
@@ -3003,6 +3046,25 @@ local MeleeAuraHitpartDropdown = Combat_Section1:NewDropdown("Melee Aura Hitpart
 end)
 
 -- camlock
+local canenablewallbang = true
+Combat_Section3:NewButton("Wallbang", "Makes your shots register through walls.", function()
+	if canenablewallbang == true then
+		canenablewallbang = false
+		local Map = Workspace:FindFirstChild("Map")
+		if (Map and Map ~= nil) then
+			local Parts = Map:FindFirstChild("Parts")
+			if (Parts and Parts ~= nil) then
+				local M_Parts = Parts:FindFirstChild("M_Parts")
+				if (M_Parts and M_Parts ~= nil) then
+					local Characters = Workspace:FindFirstChild("Characters")
+					if (Characters and Characters ~= nil) then
+						M_Parts.Parent = Characters
+					end
+				end
+			end
+		end
+	end
+end)
 
 -- // Services
 local Players: Players = game:GetService("Players")
@@ -3055,7 +3117,7 @@ local function getNearestPart()
 
 	-- Iterate over all parts in the workspace
 	for _, object in ipairs(workspace:WaitForChild("Characters"):GetChildren()) do
-		if object:IsA("Model") and not (object.Name == LocalPlayer.Name) then
+		if not (object.Name == "M_Parts") and object:IsA("Model") and not (object.Name == LocalPlayer.Name) then
 			local hum = object:FindFirstChildOfClass("Humanoid")
 			local torso = object:FindFirstChild("Torso")
 			if hum and hum.Health > 0 then
@@ -3718,7 +3780,6 @@ local PreRender: RBXScriptConnection = RunService.PreRender:Connect(function(del
 	end
 end)
 
-
 _G.ProjectileControlToggled = false
 local ProjectileControlToggler = Combat_Section2:NewToggle("Projectile Control", "Lets you control projectiles.", function(state)
 	if state then
@@ -3958,7 +4019,7 @@ end
 local function InvisibilityAnalyse(Object)
 	local Connection: RBXScriptConnection
 	Connection = RunService.Stepped:Connect(function()
-		if (Object:IsA("BasePart") and not (string.find(Object.Name, "Leg") or string.find(Object.Name, "Arm"))) then
+		if (Object:IsA("BasePart") and (Object.Parent == Self.Character) and not (string.find(Object.Name, "Arm") or string.find(Object.Name, "Leg"))) then
 			if (Noclip == true) then
 				Object.CanCollide = false
 			else
@@ -4303,7 +4364,7 @@ task.spawn(function()
 	RunService.PreRender:Connect(function()
 		local charactersfolder = Workspace:FindFirstChild("Characters")
 		for _, plr in pairs(charactersfolder:GetChildren()) do
-			if not (plr:HasTag("chams")) and not (plr.Name == Self.Name) then
+			if not (plr:HasTag("chams")) and not (plr.Name == Self.Name) and not (plr:IsA("Folder")) then
 				plr:AddTag("chams")
 				for i,v in pairs(plr:GetDescendants()) do
 					if v:IsA("BasePart") then
@@ -5242,6 +5303,11 @@ task.spawn(function(nobr)
 						}
 
 						tool.Event:FireServer(unpack(args))
+						local args = {
+							[1] = "End"
+						}
+
+						tool.Event:FireServer(unpack(args))
 					end
 				end
 			end
@@ -5323,4 +5389,98 @@ task.spawn(function(InfInvSlots)
 			end
 		end
 	end)
+end)
+
+local Map = Window:NewTab("Map")
+local MapTweaks = Map:NewSection("Map Tweaks")
+MapTweaks:NewButton("Remove Barbed Wire", "Removes all the barbed wire from the game.", function()
+	local Filter = Workspace:FindFirstChild("Filter")
+	if (Filter and Filter ~= nil) then
+		local Parts = Filter:FindFirstChild("Parts")
+		if (Parts and Parts ~= nil) then
+			local F_Parts = Parts:FindFirstChild("F_Parts")
+			if (F_Parts and F_Parts ~= nil) then
+				local Folder = F_Parts:FindFirstChild("Folder")
+				if (Folder and Folder ~= nil) then
+					task.defer(Folder.ClearAllChildren, Folder)
+				end
+			end
+		end
+	end
+end)
+MapTweaks:NewButton("Remove Drowning", "Removes all the drowning from the game.", function()
+	local Filter = Workspace:FindFirstChild("Filter")
+	if (Filter and Filter ~= nil) then
+		local WaterCurrents = Filter:FindFirstChild("WaterCurrents")
+		if (WaterCurrents and WaterCurrents ~= nil) then
+			task.defer(WaterCurrents.ClearAllChildren, WaterCurrents)
+		end
+	end
+end)
+MapTweaks:NewButton("Remove Water", "Removes all the water from the game.", function()
+	local Terrain = Workspace:FindFirstChildOfClass("Terrain")
+	if (Terrain and Terrain ~= nil) then
+		task.defer(Terrain.Clear, Terrain)
+	end
+end)
+MapTweaks:NewButton("Remove Grinders", "Removes all the grinders from the game.", function()
+	local Map = Workspace:FindFirstChild("Map")
+	if (Map and Map ~= nil) then
+		local Parts = Map:FindFirstChild("Parts")
+		if (Parts and Parts ~= nil) then
+			local Grinders = Parts:FindFirstChild("Grinders")
+			if (Grinders and Grinders ~= nil) then
+				task.defer(Grinders.ClearAllChildren, Grinders)
+			end
+		end
+	end
+end)
+MapTweaks:NewButton("Remove Decoration", "Removes all the decoration from the game.", function()
+	local Filter = Workspace:FindFirstChild("Filter")
+	if (Filter and Filter ~= nil) then
+		local Parts = Filter:FindFirstChild("Parts")
+		if (Parts and Parts ~= nil) then
+			local F_Parts = Parts:FindFirstChild("F_Parts")
+			if (F_Parts and F_Parts ~= nil) then
+				task.defer(F_Parts.ClearAllChildren, F_Parts)
+			end
+		end
+	end
+	local Map = Workspace:FindFirstChild("Map")
+	if (Map and Map ~= nil) then
+		local Parts = Map:FindFirstChild("Parts")
+		if (Parts and Parts ~= nil) then
+			local M_Parts = Parts:FindFirstChild("M_Parts")
+			if (M_Parts and M_Parts ~= nil) then
+				local Props = M_Parts:FindFirstChild("Props")
+				if (Props and Props ~= nil) then
+					task.defer(Props.ClearAllChildren, Props)
+				end
+			end
+		end
+		local Security = Map:FindFirstChild("Security")
+		if (Security and Security ~= nil) then
+			local Alarms = Security:FindFirstChild("Alarms")
+			local Cameras = Security:FindFirstChild("Cameras")
+			if (Alarms and Alarms ~= nil) then
+				task.defer(Alarms.ClearAllChildren, Alarms)
+			end
+			if (Cameras and Cameras ~= nil) then
+				task.defer(Cameras.ClearAllChildren, Cameras)
+			end
+		end
+		local StreetLights = Map:FindFirstChild("StreetLights")
+		if (StreetLights and StreetLights ~= nil) then
+			task.defer(StreetLights.ClearAllChildren, StreetLights)
+		end
+	end
+end)
+MapTweaks:NewButton("Remove Doors", "Removes all the doors from the game.", function()
+	local Map = Workspace:FindFirstChild("Map")
+	if (Map and Map ~= nil) then
+		local Doors = Map:FindFirstChild("Doors")
+		if (Doors and Doors ~= nil) then
+			task.defer(Doors.ClearAllChildren, Doors)
+		end
+	end
 end)

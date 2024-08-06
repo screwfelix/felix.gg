@@ -4851,6 +4851,73 @@ task.spawn(function(nearlockk)
 	end)
 end)
 
+_G.NearOrbit = false
+local NearOrbitToggle = AntiAim_Section1:NewToggle("Orbit Near Players", "Makes your character orbit the nearest player.", function(state)
+	if state then
+		_G.NearOrbit = true
+	else
+		_G.NearOrbit = false
+	end
+end)
+_G.OrbitMethod = "Random"
+local OrbitMethodDropdown = AntiAim_Section1:NewDropdown("Orbit Method", "Defines the orbit method.", {"Random", "Back"}, function(s)
+	_G.OrbitMethod = s
+end)
+
+task.spawn(function(nearstrafee)
+	RunService.PreRender:Connect(function()
+		if _G.NearOrbit == true then
+			local char = Self.Character
+			if (char and char ~= nil) then
+				local nearplayer = findNearestLimb(Self, "Torso", 25)
+				if nearplayer then
+					local hrp = char:FindFirstChild("HumanoidRootPart")
+					if hrp then
+						if _G.OrbitMethod == "Random" then
+							hrp.CFrame = nearplayer.CFrame + Vector3.new(
+								Random.new():NextNumber(-5,5),
+								0,
+								Random.new():NextNumber(-5,5)
+							)
+						elseif _G.OrbitMethod == "Back" then
+							hrp.CFrame = nearplayer.CFrame - (nearplayer.CFrame.LookVector*5)
+						end
+					end
+				end
+			end
+		end
+	end)
+end)
+
+local TPKillButton = Combat_Section1:NewButton("TP-Kill Selected", "TP-kills the username defined below.", function()
+	local Characters = Workspace:FindFirstChild("Characters")
+	if Characters then
+		local TargetPlayer = Characters:FindFirstChild(_G.TPKillUser)
+		if TargetPlayer then
+			local Torso = TargetPlayer:FindFirstChild("Torso")
+			if Torso then
+				local Character = Self.Character
+				if Character then
+					local Root = Character:FindFirstChild("HumanoidRootPart")
+					if Root then
+						local og = Root.CFrame
+						Root.CFrame = Torso.CFrame
+						task.delay(0.25, function()
+							Root.CFrame = og
+						end)
+					end
+				end
+			end
+		end
+	end
+end)
+
+_G.TPKillUser = ""
+local TPKillUserBox = Combat_Section1:NewTextBox("TP-Kill Username", "Defines the username to tp-kill.", function(s)
+	_G.TPKillUser = s
+end)
+
+
 local RemoveAnimator = SelfSection:NewButton("Remove Animator", "[RISKY] Removes your animator, freezing your character's animations.", function()
 	local Character = Self.Character
 	if (Character and Character ~= nil) then

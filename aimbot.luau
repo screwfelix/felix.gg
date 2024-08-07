@@ -2743,6 +2743,10 @@ local function analyzeInstance(obj: Instance)
 				local destroyed = obj.Destroying:Connect(function()
 					ball:Remove()
 				end)
+				
+				local died = humanoid.Died:Connect(function()
+					ball:Remove()
+				end)
 			end)
 		end
 	end

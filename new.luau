@@ -3949,6 +3949,7 @@ task.spawn(function(Jump)
 	end)
 end)
 
+
 -- invisibility
 -- // Services
 local RunService: RunService = game:GetService("RunService")
@@ -5472,15 +5473,6 @@ MapTweaks:NewButton("Remove Decoration", "Removes all the decoration from the ga
 		local StreetLights = Map:FindFirstChild("StreetLights")
 		if (StreetLights and StreetLights ~= nil) then
 			task.defer(StreetLights.ClearAllChildren, StreetLights)
-		end
-	end
-end)
-MapTweaks:NewButton("Remove Doors", "Removes all the doors from the game.", function()
-	local Map = Workspace:FindFirstChild("Map")
-	if (Map and Map ~= nil) then
-		local Doors = Map:FindFirstChild("Doors")
-		if (Doors and Doors ~= nil) then
-			task.defer(Doors.ClearAllChildren, Doors)
 		end
 	end
 end)

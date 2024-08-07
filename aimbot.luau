@@ -2642,91 +2642,149 @@ function Kavo.CreateLib(kavName, themeList)
 	end  
 	return Tabs
 end
+local Settings = {
+	Target = nil,
+	Limb = nil,
+	Enabled = false,
+	Toggled = false,
+	Aimpart = "Head",
+	
+	Prediction = 10,
+
+	BallSize = 15, -- // Recommended: 15 to 30.
+	BallShape = Enum.PartType.Ball,
+	BallTransparency = 0.75,
+	BallMaterial = Enum.Material.Neon,
+	BallColor = Color3.fromRGB(0,0,255),
+}
 
 local Library = Kavo
-local Window = Library.CreateLib("Felix's Aimbot", "Synapse")
-local Tab = Window:NewTab("Aimbot")
-local Tab2 = Window:NewTab("UI")
-local Section = Tab:NewSection("Aimbot")
-local Section2 = Tab2:NewSection("UI Settings")
-Section2:NewKeybind("Toggle UI", "Toggles the UI with an keybind.", Enum.KeyCode.Insert, function()
+
+
+local FelixAimbotWindow = Library.CreateLib("Felix's Aimbot", "DarkTheme")
+
+local CamlockTab = FelixAimbotWindow:NewTab("Camlock")
+local CamlockSection = CamlockTab:NewSection("Camera Lock Configuration")
+local FOVSection = CamlockTab:NewSection("FOV Configuration")
+
+local CamlockToggle = CamlockSection:NewToggle("Camlock", "Toggles the camlock on/off.", function(state)
+	Settings.Enabled = state
+end)
+local AimpartDropdown = CamlockSection:NewDropdown("Aimpart", "Defines the limb the camlock will aim at.", {"Head", "Torso", "Right Arm", "Right Leg", "Left Leg", "Left Arm", "HumanoidRootPart"}, function(currentOption)
+	Settings.Aimpart = currentOption
+end)
+local PredictionBox = CamlockSection:NewTextBox("Prediction", "The lesser value, the stronger prediction. Based on velocity.", function(txt)
+	Settings.Prediction = tostring(txt)
+end)
+
+-- fov
+
+local FOVSize = FOVSection:NewTextBox("Size", "Defines the FOV size. Recommended: 15", function(txt)
+	Settings.BallSize = tonumber(txt)
+end)
+local FOVTransparency = FOVSection:NewTextBox("Transparency", "Defines the FOV transparency..", function(txt)
+	Settings.BallTransparency = tonumber(txt)
+end)
+local FOVColor = FOVSection:NewColorPicker("Color", "Defines the FOV color.", Color3.fromRGB(0,0,255), function(color)
+	Settings.BallColor = color
+end)
+local FOVMaterialDropdown = FOVSection:NewDropdown("Material", "Defines the material the FOV will use.", {"Asphalt","Basalt","Brick","Cobblestone","Concrete","CorrodedMetal","CrackedLava","DiamondPlate","Fabric","Foil","ForceField","Glacier","Glass","Granite","Grass","Ground","Ice","LeafyGrass","Limestone","Marble","Metal","Mud","Neon","Pavement","Pebble","Plastic","Rock","Salt","Sand","Sandstone","Slate","SmoothPlastic","Snow","Wood","WoodPlanks"}, function(currentOption)
+	Settings.BallMaterial = Enum.Material[currentOption]
+end)
+local FOVShapeDropdown = FOVSection:NewDropdown("Shape", "Defines the shape the FOV will use.", {"Ball", "Block", "CornerWedge", "Wedge", "Cylinder"}, function(currentOption)
+	Settings.BallShape = Enum.PartType[currentOption]
+end)
+
+
+
+local UITab = FelixAimbotWindow:NewTab("UI")
+local UISection = UITab:NewSection("UI Configuration")
+local UIToggle = UISection:NewKeybind("Toggle UI Keybind", "Defines the keybind which will toggle the UI on/off.", Enum.KeyCode.Insert, function()
 	Library:ToggleUI()
 end)
 
+local players = game:GetService("Players")
+local self = players.LocalPlayer
+local mouse = self:GetMouse()
+local rs = game:GetService("RunService")
+local uis = game:GetService("UserInputService")
 
+local ballname = tostring(math.random(1,1000000000))
 
-local AimbotSettings = {
-	Enabled = false,
-	Aimpart = "Head", --> What limb should the aimbot focus at?
-	Prediction = 12.5, --> The less, the more prediction.
-}
-Section:NewToggle("Enabled", "Toggles the aimbot on/off.", function(state)
-	AimbotSettings.Enabled = state
-end)
-Section:NewDropdown("Aimpart", "Defines the limb for the aimbot to aim at.", {"Head", "Torso", "Right Arm", "Left Arm", "Right Leg", "Left Leg", "HumanoidRootPart"}, function(currentOption)
-	AimbotSettings.Aimpart = currentOption
-end)
-Section:NewTextBox("Prediction", "Recommended: 12.5 (THE LESS, THE HIGHER PREDICTION.)", function(txt)
-	AimbotSettings.Prediction = tonumber(txt)
-end)
-
-
-local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-local Players = game:GetService("Players")
-local Player = Players.LocalPlayer
-local Mouse = Player:GetMouse()
-local Camera = workspace.CurrentCamera
-
-local Aiming = false
-
-local InputBegan = UserInputService.InputBegan:Connect(function(input)
-	local inputType = input.UserInputType
-	if (inputType == Enum.UserInputType.MouseButton2) then
-		Aiming = true
+local function analyzeInstance(obj: Instance)
+	if (obj:IsA("Model") and not (obj.Name == self.Name)) then
+		local humanoid: Humanoid = obj:FindFirstChild("Humanoid")
+		if (humanoid and humanoid ~= nil) then
+			local ball = Instance.new("Part", obj)
+			
+			task.spawn(function(ballHandler)
+				local prerender = rs.PreRender:Connect(function()
+					ball.Name = ballname
+					ball.Anchored = true
+					ball.CanCollide = false
+					ball.CanTouch = false
+					ball.CanQuery = true
+					ball.Locked = true
+					ball.CastShadow = false
+					ball.Size = Vector3.new(Settings.BallSize, Settings.BallSize, Settings.BallSize)
+					ball.Color = Settings.BallColor
+					ball.Transparency = Settings.BallTransparency
+					ball.Shape = Settings.BallShape
+					ball.Material = Settings.BallMaterial
+					
+					local aimpart = obj:FindFirstChild(Settings.Aimpart)
+					if (aimpart and aimpart ~= nil) then
+						ball.CFrame = aimpart.CFrame
+					else
+						ball:Remove()
+					end
+				end)
+				
+				local destroyed = obj.Destroying:Connect(function()
+					ball:Remove()
+				end)
+			end)
+		end
 	end
-end)
+end
 
-local InputEnded = UserInputService.InputEnded:Connect(function(input)
-	local inputType = input.UserInputType
+for _, descendant in ipairs(game:GetService("Workspace"):WaitForChild("Characters"):GetChildren()) do
+	task.spawn(analyzeInstance, descendant)
+end
+local descendantAddedConnection: RBXScriptConnection = game:GetService("Workspace"):WaitForChild("Characters").ChildAdded:Connect(analyzeInstance)
+
+local inputBegan = uis.InputBegan:Connect(function(key)
+	local inputType = key.UserInputType
 	if (inputType == Enum.UserInputType.MouseButton2) then
-		Aiming = false
-	end
-end)
-
-local function getNearestPart()
-	local origin = Mouse.Hit.p
-	local closestHead = nil
-	local shortestDistance = math.huge -- Start with a very large number
-
-	for _, player in ipairs(Players:GetPlayers()) do
-		local plrchar = player.Character
-		if plrchar and not (player == Player) then
-			local part = plrchar:FindFirstChild(AimbotSettings.Aimpart)
-			if part then
-				local vector, onScreen = Camera:WorldToViewportPoint(part.Position)
-
-				if onScreen then
-					local distance = (origin - part.Position).magnitude
-
-					if distance < shortestDistance then
-						shortestDistance = distance
-						closestHead = part
+		Settings.Toggled = true
+		if (mouse.Target and mouse.Target ~= nil) then
+			if (mouse.Target.Name == ballname) then
+				Settings.Target = mouse.Target
+				local character = mouse.Target.Parent
+				if (character and character ~= nil) then
+					local targetlimb = character:FindFirstChild(Settings.Aimpart)
+					if (targetlimb and targetlimb ~= nil) then
+						Settings.Limb = targetlimb
 					end
 				end
 			end
 		end
-
 	end
+end)
+local inputEnded = uis.InputEnded:Connect(function(key)
+	local inputType = key.UserInputType
+	if (inputType == Enum.UserInputType.MouseButton2) then
+		Settings.Toggled = false
+		Settings.Target = nil
+		Settings.Limb = nil
+	end
+end)
 
-	return closestHead
-end
-
-local PreRender = RunService.PreRender:Connect(function(deltaTimeRender)
-	if (Aiming == true and AimbotSettings.Enabled == true) then
-		local shortest = getNearestPart()
-		if shortest then
-			Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, (shortest.Position + (shortest.Velocity/AimbotSettings.Prediction)))
+local camlock_mainconnection = rs.PreRender:Connect(function()
+	if (Settings.Enabled == true and Settings.Toggled == true and Settings.Limb ~= nil) then
+		local camera = workspace.CurrentCamera
+		if (camera and camera ~= nil) then
+			camera.CFrame = CFrame.lookAt(camera.CFrame.Position, (Settings.Limb.Position + (Settings.Limb.Velocity/Settings.Prediction)))
 		end
 	end
 end)

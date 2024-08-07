@@ -3102,7 +3102,10 @@ local Camlock_Aimpart: string = "Head"
 Combat_Section3:NewDropdown("Aimpart", "Defines which limb the camlock will target.", {"Head", "Torso", "Left Arm", "Right Arm", "Left Leg", "Right Leg"}, function(t)
 	Camlock_Aimpart = t
 end)
-local Camlock_Prediction: number = 19.5
+local Camlock_Prediction: number = 13.5
+local PredictionBox = Combat_Section3:NewTextBox("Camlock Prediction", "Recommended: 13.5.", function(txt)
+	_G.Camlock_Prediction = tonumber(txt)
+end)
 
 -- // Don't modify
 local HoldingButton2: boolean = false

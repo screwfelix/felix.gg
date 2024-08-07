@@ -2648,7 +2648,7 @@ local Settings = {
 	Enabled = false,
 	Toggled = false,
 	Aimpart = "Head",
-	
+
 	Prediction = 10,
 
 	BallSize = 15, -- // Recommended: 15 to 30.
@@ -2656,6 +2656,10 @@ local Settings = {
 	BallTransparency = 0.75,
 	BallMaterial = Enum.Material.Neon,
 	BallColor = Color3.fromRGB(0,0,255),
+	
+	XOffset = 0,
+	YOffset = 0,
+	ZOffset = 0
 }
 
 local Library = Kavo
@@ -2666,6 +2670,7 @@ local FelixAimbotWindow = Library.CreateLib("Felix's Aimbot", "DarkTheme")
 local CamlockTab = FelixAimbotWindow:NewTab("Camlock")
 local CamlockSection = CamlockTab:NewSection("Camera Lock Configuration")
 local FOVSection = CamlockTab:NewSection("FOV Configuration")
+local OffsetSection = CamlockTab:NewSection("Offset Configuration")
 
 local CamlockToggle = CamlockSection:NewToggle("Camlock", "Toggles the camlock on/off.", function(state)
 	Settings.Enabled = state
@@ -2674,7 +2679,18 @@ local AimpartDropdown = CamlockSection:NewDropdown("Aimpart", "Defines the limb 
 	Settings.Aimpart = currentOption
 end)
 local PredictionBox = CamlockSection:NewTextBox("Prediction", "The lesser value, the stronger prediction. Based on velocity.", function(txt)
-	Settings.Prediction = tostring(txt)
+	Settings.Prediction = tonumber(txt)
+end)
+
+-- offset
+local XOffset = OffsetSection:NewTextBox("X Offset", "Defines the X offset.", function(txt)
+	Settings.XOffset = tonumber(txt)
+end)
+local YOffset = OffsetSection:NewTextBox("Y Offset", "Defines the Y offset.", function(txt)
+	Settings.YOffset = tonumber(txt)
+end)
+local ZOffset = OffsetSection:NewTextBox("Z Offset", "Defines the Z offset.", function(txt)
+	Settings.ZOffset = tonumber(txt)
 end)
 
 -- fov
@@ -2716,7 +2732,7 @@ local function analyzeInstance(obj: Instance)
 		local humanoid: Humanoid = obj:FindFirstChild("Humanoid")
 		if (humanoid and humanoid ~= nil) then
 			local ball = Instance.new("Part", obj)
-			
+
 			task.spawn(function(ballHandler)
 				local prerender = rs.PreRender:Connect(function()
 					ball.Name = ballname
@@ -2731,7 +2747,7 @@ local function analyzeInstance(obj: Instance)
 					ball.Transparency = Settings.BallTransparency
 					ball.Shape = Settings.BallShape
 					ball.Material = Settings.BallMaterial
-					
+
 					local aimpart = obj:FindFirstChild(Settings.Aimpart)
 					if (aimpart and aimpart ~= nil) then
 						ball.CFrame = aimpart.CFrame
@@ -2739,11 +2755,11 @@ local function analyzeInstance(obj: Instance)
 						ball:Remove()
 					end
 				end)
-				
+
 				local destroyed = obj.Destroying:Connect(function()
 					ball:Remove()
 				end)
-				
+
 				local died = humanoid.Died:Connect(function()
 					ball:Remove()
 				end)
@@ -2788,7 +2804,7 @@ local camlock_mainconnection = rs.PreRender:Connect(function()
 	if (Settings.Enabled == true and Settings.Toggled == true and Settings.Limb ~= nil) then
 		local camera = workspace.CurrentCamera
 		if (camera and camera ~= nil) then
-			camera.CFrame = CFrame.lookAt(camera.CFrame.Position, (Settings.Limb.Position + (Settings.Limb.Velocity/Settings.Prediction)))
+			camera.CFrame = CFrame.lookAt(camera.CFrame.Position, ((Settings.Limb.Position + (Settings.Limb.Velocity/Settings.Prediction))) + Vector3.new(Settings.XOffset, Settings.YOffset, Settings.ZOffset))
 		end
 	end
 end)

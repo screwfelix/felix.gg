@@ -2699,9 +2699,11 @@ local function getNearestPart()
 	local closestHead = nil
 	local shortestDistance = math.huge -- Start with a very large number
 
-	for _, part in ipairs(workspace:GetDescendants()) do
-		if part:IsA("BasePart") and part.Name == AimbotSettings.Aimpart then
-			if not part:FindFirstAncestor(Player.Character.Name) then
+	for _, player in ipairs(Players:GetPlayers()) do
+		local plrchar = player.Character
+		if plrchar and not (player == Player) then
+			local part = plrchar:FindFirstChild(AimbotSettings.Aimpart)
+			if part then
 				local vector, onScreen = Camera:WorldToViewportPoint(part.Position)
 
 				if onScreen then
@@ -2714,6 +2716,7 @@ local function getNearestPart()
 				end
 			end
 		end
+
 	end
 
 	return closestHead

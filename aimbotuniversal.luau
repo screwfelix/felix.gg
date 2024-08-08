@@ -2735,7 +2735,7 @@ local whitelisted = {}
 
 local function analyzeInstance(obj: Instance)
 	if (obj:IsA("Model") and not (obj.Name == self.Name)) then
-		local humanoid: Humanoid = obj:FindFirstChildOfClass("Humanoid")
+		local humanoid: Humanoid = obj:WaitForChild("Humanoid", 5)
 		if (humanoid and humanoid ~= nil) then
 			local ball = Instance.new("Part", obj)
 			table.insert(whitelisted, ball)

@@ -2666,7 +2666,7 @@ local Settings = {
 local Library = Kavo
 
 
-local FelixAimbotWindow = Library.CreateLib("Felix's Aimbot", "DarkTheme")
+local FelixAimbotWindow = Library.CreateLib("felixware", "DarkTheme")
 
 local CamlockTab = FelixAimbotWindow:NewTab("Camlock")
 local CamlockSection = CamlockTab:NewSection("Camera Lock Configuration")
@@ -2800,10 +2800,10 @@ local function analyzeInstance(obj: Instance)
 	end
 end
 
-for _, descendant in ipairs(game:GetService("Workspace"):WaitForChild("Characters"):GetChildren()) do
+for _, descendant in ipairs(game:GetService("Workspace"):GetDescendants()) do
 	task.spawn(analyzeInstance, descendant)
 end
-local descendantAddedConnection: RBXScriptConnection = game:GetService("Workspace"):WaitForChild("Characters").ChildAdded:Connect(analyzeInstance)
+local descendantAddedConnection: RBXScriptConnection = game:GetService("Workspace").DescendantAdded:Connect(analyzeInstance)
 
 local inputBegan = uis.InputBegan:Connect(function(key)
 	local inputType = key.UserInputType

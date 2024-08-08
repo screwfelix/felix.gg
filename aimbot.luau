@@ -2715,6 +2715,19 @@ local FOVChamsToggle = FOVSection:NewToggle("Chams", "Toggles the FOV chams on/o
 	Settings.Chams = state
 end)
 
+local Map = workspace:WaitForChild("Map")
+local Parts = Map:WaitForChild("Parts")
+local M_Parts = Parts:FindFirstChild("M_Parts")
+local OGParent = M_Parts.Parent
+local Characters = workspace:WaitForChild("Characters")
+local WallbangToggle = CamlockSection:NewToggle("Wallbang", "Lets you shoot through walls.", function(state)
+	if state then
+		M_Parts.Parent = Characters
+	else
+		M_Parts.Parent = OGParent
+	end
+end)
+
 
 
 local UITab = FelixAimbotWindow:NewTab("UI")
@@ -2731,21 +2744,25 @@ local uis = game:GetService("UserInputService")
 
 local ballname = tostring(math.random(1,1000000000))
 
+local whitelisted = {}
+
 local function analyzeInstance(obj: Instance)
 	if (obj:IsA("Model") and not (obj.Name == self.Name)) then
 		local humanoid: Humanoid = obj:FindFirstChild("Humanoid")
 		if (humanoid and humanoid ~= nil) then
 			local ball = Instance.new("Part", obj)
+			table.insert(whitelisted, ball)
 			local esp = Instance.new("BoxHandleAdornment", ball)
 
 			task.spawn(function(ballHandler)
-				local prerender = rs.PreRender:Connect(function()					
+				local prerender = rs.PreRender:Connect(function()	
+					ball.CollisionGroup = "balls"
 					ball.Name = ballname
 					ball.Anchored = true
 					ball.CanCollide = false
 					ball.CanTouch = false
 					ball.CanQuery = true
-					ball.Locked = true
+					ball.Locked = false
 					ball.CastShadow = false
 					ball.Size = Vector3.new(Settings.BallSize, Settings.BallSize, Settings.BallSize)
 					ball.Color = Settings.BallColor
@@ -2762,7 +2779,7 @@ local function analyzeInstance(obj: Instance)
 					esp.AlwaysOnTop = true
 					esp.AdornCullingMode = Enum.AdornCullingMode.Never
 					esp.Name = ball.Name.. " ESP"
-
+					
 					local aimpart = obj:FindFirstChild(Settings.Aimpart)
 					if (aimpart and aimpart ~= nil) then
 						ball.CFrame = aimpart.CFrame
@@ -2792,15 +2809,23 @@ local inputBegan = uis.InputBegan:Connect(function(key)
 	local inputType = key.UserInputType
 	if (inputType == Enum.UserInputType.MouseButton2) then
 		Settings.Toggled = true
-		if (mouse.Target and mouse.Target ~= nil) then
-			if (mouse.Target.Name == ballname) then
-				Settings.Target = mouse.Target
-				local character = mouse.Target.Parent
-				if (character and character ~= nil) then
-					local targetlimb = character:FindFirstChild(Settings.Aimpart)
-					if (targetlimb and targetlimb ~= nil) then
-						Settings.Limb = targetlimb
-					end
+		local rayOrigin = workspace.CurrentCamera.CFrame.Position
+		local rayDestination = mouse.Hit.Position + ((mouse.Hit.LookVector)* 999999)
+		local params = RaycastParams.new()
+		params.IgnoreWater = true
+		params.RespectCanCollide = false
+		params.BruteForceAllSlow = true
+		params.FilterType = Enum.RaycastFilterType.Include
+		params.FilterDescendantsInstances = whitelisted
+		local rayDirection = rayDestination - rayOrigin
+		local raycastResult = workspace:Raycast(rayOrigin, rayDirection, params)
+		if raycastResult and raycastResult ~= nil then
+			Settings.Target = raycastResult.Instance
+			local character = raycastResult.Instance.Parent
+			if (character and character ~= nil) then
+				local targetlimb = character:FindFirstChild(Settings.Aimpart)
+				if (targetlimb and targetlimb ~= nil) then
+					Settings.Limb = targetlimb
 				end
 			end
 		end

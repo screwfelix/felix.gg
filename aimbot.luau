@@ -2647,6 +2647,7 @@ local Settings = {
 	Limb = nil,
 	Enabled = false,
 	Toggled = false,
+	Chams = false,
 	Aimpart = "Head",
 
 	Prediction = 10,
@@ -2710,6 +2711,9 @@ end)
 local FOVShapeDropdown = FOVSection:NewDropdown("Shape", "Defines the shape the FOV will use.", {"Ball", "Block", "CornerWedge", "Wedge", "Cylinder"}, function(currentOption)
 	Settings.BallShape = Enum.PartType[currentOption]
 end)
+local FOVChamsToggle = FOVSection:NewToggle("Chams", "Toggles the FOV chams on/off.", function(state)
+	Settings.Chams = state
+end)
 
 
 
@@ -2732,9 +2736,10 @@ local function analyzeInstance(obj: Instance)
 		local humanoid: Humanoid = obj:FindFirstChild("Humanoid")
 		if (humanoid and humanoid ~= nil) then
 			local ball = Instance.new("Part", obj)
+			local esp = Instance.new("BoxHandleAdornment", ball)
 
 			task.spawn(function(ballHandler)
-				local prerender = rs.PreRender:Connect(function()
+				local prerender = rs.PreRender:Connect(function()					
 					ball.Name = ballname
 					ball.Anchored = true
 					ball.CanCollide = false
@@ -2747,6 +2752,16 @@ local function analyzeInstance(obj: Instance)
 					ball.Transparency = Settings.BallTransparency
 					ball.Shape = Settings.BallShape
 					ball.Material = Settings.BallMaterial
+					
+					esp.Adornee = ball
+					esp.Visible = Settings.Chams
+					esp.Size = ball.Size
+					esp.Color3 = ball.Color
+					esp.Transparency = ball.Transparency
+					esp.ZIndex = 1
+					esp.AlwaysOnTop = true
+					esp.AdornCullingMode = Enum.AdornCullingMode.Never
+					esp.Name = ball.Name.. " ESP"
 
 					local aimpart = obj:FindFirstChild(Settings.Aimpart)
 					if (aimpart and aimpart ~= nil) then

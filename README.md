@@ -1,11 +1,15 @@
-"felix.gg" is a exploiting/scripting/cheating software developed by @felix.lua on discord.
-This software is meant to be used in the ROBLOX game, "Criminality".
+# Welcome to Felix's Repository
 
-Tired of winning fights?
-Cannot seem to find any good scripts? Or are they all paid?
-Well look no further, felix.gg is the best solution for you!
+## Introduction
 
-We have many overpowered features, for combat & trolling!
-Our script will always be free & keyless, 100% of the time.
+Welcome to the repository managed by Felix.
 
-Need support/help? Join the discord server link in the about of this repository!
+This repository houses a comprehensive collection of scripts, both universal and specialized, crafted to support various aspects of Roblox scripting and exploitation. Each script is developed with precision to enhance your experience and efficacy in the Roblox environment.
+
+## Contribution
+
+We invite you to explore the scripts available. Should you find any particular script beneficial, please consider starring the repository. Your endorsement greatly contributes to the continued development and refinement of these resources.
+
+## Acknowledgements
+
+Thank you for visiting, and we hope these scripts prove invaluable in your endeavors.
